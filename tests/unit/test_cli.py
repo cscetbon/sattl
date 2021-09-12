@@ -2,9 +2,10 @@ from click.testing import CliRunner
 from sattl.cli import test
 from mock import patch
 
+runner = CliRunner()
+
 
 def test_cli_required_params():
-    runner = CliRunner()
     result = runner.invoke(test, ["/tmp"])
     assert result.exit_code == 2
     assert "Missing option '--org'" in result.output
@@ -18,7 +19,6 @@ def test_cli_required_params():
 
 
 def test_cli_is_sandbox():
-    runner = CliRunner()
     with patch("sattl.cli.check_is_sandbox") as check_is_sandbox:
         result = runner.invoke(test, ["--org", "dom-ain", "--is-sandbox", "no", "/tmp"])
     assert result.exit_code == 0
