@@ -1,0 +1,23 @@
+on: push
+name: SATTL
+
+jobs:
+  sattl-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Install system requirements
+      run: |
+        sudo apt-get update -y
+        sudo apt-get -y -qq install --no-install-recommends build-essential
+    - name: Copy test config
+      run: cp ${GITHUB_WORKSPACE}/config.json.circle config.json
+    - name: Setup dependencies
+      run: pip install --no-cache-dir -i https://tech-pypi-prod.2u.com/simple -e .
+    - name: Run tests
+      run: |
+        mkdir -p test-results log
+        pip install -i https://tech-pypi-prod.2u.com/simple '.[testing]'
+        python -m pytest --junitxml=test-results/junit.xml
