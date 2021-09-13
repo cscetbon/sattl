@@ -1,0 +1,89 @@
+version: 2.1
+
+workflows:
+  version: 2
+  ci:
+    jobs:
+#      - docker_build
+      - run_lint
+      - build_and_test
+
+executors:
+  python:
+    docker:
+      - image: circleci/python:3.8
+
+jobs:
+
+  docker_build:
+    executor: python
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker image
+          command: |
+            echo TAG=master > .env
+            docker-compose build
+
+  run_lint:
+    executor: python
+    steps:
+      - checkout
+      - run:
+          name: Copy test config
+          command: cp .circleci/config.json.circle config.json
+      - restore_cache:
+          keys:
+            - py-deps-v1-{{ .Branch }}-{{ checksum "setup.cfg" }}
+            - py-deps-v1-{{ .Branch }}
+      - run:
+          name: Setup dependencies
+          command: |
+            pip install --no-cache-dir -i https://tech-pypi-prod.2u.com/simple .
+      - save_cache:
+          paths:
+            - ~/project/.venv
+          key: py-deps-v1-{{ .Branch }}-{{ checksum "setup.cfg" }}
+      - run:
+          name: Run lint
+          command: |
+            # Permit CI to pass even when there are linting errors
+            pycodestyle --show-source || true
+
+  build_and_test:
+    docker:
+      - image: circleci/python:3.8
+    executor: python
+    steps:
+      - checkout
+      - run:
+          name: Install system requirements
+          command: |
+            sudo apt-get update -y
+            sudo apt-get -y -qq install --no-install-recommends build-essential
+      - run:
+          name: Copy test config
+          command: cp .circleci/config.json.circle config.json
+      - restore_cache:
+          keys:
+            - py-deps-v1-{{ .Branch }}-{{ checksum "setup.cfg" }}
+            - py-deps-v1-{{ .Branch }}
+      - run:
+          name: Setup dependencies
+          command: |
+            pip install --no-cache-dir -i https://tech-pypi-prod.2u.com/simple -e .
+      - save_cache:
+          paths:
+            - ~/project/.venv
+          key: py-deps-v1-{{ .Branch }}-{{ checksum "setup.cfg" }}
+      - run:
+          name: Run tests
+          command: |
+            mkdir -p test-results log
+            pip install -i https://tech-pypi-prod.2u.com/simple '.[testing]'
+            python -m pytest --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
