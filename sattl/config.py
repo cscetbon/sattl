@@ -30,8 +30,10 @@ class Config:
     def is_sandbox(self):
         return self._is_sandbox
 
+    @property
     def sf_username(self):
         return self._config.get(_SF_USERNAME)
 
+    @property
     def sf_password(self):
         return self._config.get(_SF_PASSWORD)
