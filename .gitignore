@@ -6,7 +6,6 @@
 *.swp*
 .cache/
 
-config.json*
 *.log*
 *.pid
 *.wsgi

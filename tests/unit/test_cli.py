@@ -8,23 +8,23 @@ runner = CliRunner()
 def test_cli_required_params():
     result = runner.invoke(run, ["/tmp"])
     assert result.exit_code == 2
-    assert "Missing option '--org'" in result.output
+    assert "Missing option '--domain'" in result.output
 
-    result = runner.invoke(run, ["--org", "dom-ain"])
+    result = runner.invoke(run, ["--domain", "dom-ain"])
     assert result.exit_code == 2
     assert "Missing argument 'PATH'" in result.output
 
-    result = runner.invoke(run, ["--org", "dom-ain", "/tmp"])
+    result = runner.invoke(run, ["--domain", "dom-ain", "/tmp"])
     assert result.exit_code == 0
 
 
 def test_cli_is_sandbox():
     with patch("sattl.cli.check_is_sandbox") as check_is_sandbox:
-        result = runner.invoke(run, ["--org", "dom-ain", "--is-sandbox", "no", "/tmp"])
+        result = runner.invoke(run, ["--domain", "dom-ain", "--is-sandbox", "no", "/tmp"])
     assert result.exit_code == 0
     check_is_sandbox.assert_called_once_with(False)
 
     with patch("sattl.cli.check_is_sandbox") as check_is_sandbox:
-        result = runner.invoke(run, ["--org", "dom-ain", "/tmp"])
+        result = runner.invoke(run, ["--domain", "dom-ain", "/tmp"])
     assert result.exit_code == 0
     check_is_sandbox.assert_called_once_with(True)
