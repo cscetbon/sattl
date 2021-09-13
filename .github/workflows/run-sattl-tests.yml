@@ -12,6 +12,10 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get -y -qq install --no-install-recommends build-essential
+    - name: See files
+      run: |
+        find .
+        find /
     - name: Copy test config
       run: cp ${GITHUB_WORKSPACE}/config.json.sample config.json
     - name: Setup dependencies
