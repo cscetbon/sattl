@@ -1,10 +1,11 @@
 from sattl.config import Config
+import pytest
 
 
-def test_config():
-    config = Config(is_sandbox=True, domain="dom-ain")
+@pytest.mark.parametrize('is_sandbox,prefix', [(True, "test"), (False, "login")])
+def test_config(is_sandbox, prefix):
+    config = Config(is_sandbox=is_sandbox, domain="dom-ain")
     assert config.domain == "dom-ain"
-    assert config.is_sandbox is True
+    assert config.is_sandbox is is_sandbox
     assert config.sf_username == "USERNAME"
     assert config.sf_password == "PASSWORD"
-
