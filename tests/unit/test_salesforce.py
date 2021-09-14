@@ -3,7 +3,7 @@ from sattl.config import Config
 from httmock import urlmatch, HTTMock
 
 
-@urlmatch(scheme='https', netloc='test.salesforce.com', path=r'/services/Soap/u/0.53', method='post')
+@urlmatch(scheme='https', netloc='test.salesforce.com', path=r'/services/Soap/u/53.0', method='post')
 def salesforce_login(*_):
     return {'status_code': 200,
             'content':
