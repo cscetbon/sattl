@@ -5,11 +5,10 @@ from httmock import urlmatch, HTTMock
 
 @urlmatch(scheme='https', netloc='test.salesforce.com', path=r'/services/Soap/u/53.0', method='post')
 def salesforce_login(*_):
-    return {'status_code': 200,
-            'content':
-                """<?xml version="1.0" encoding="UTF-8"?>
-                    <sessionId>00D7A0000009g88!AQQAQEev5W85xCXM0urY0oRblZuM6</sessionId>
-                    <serverUrl>2u-dom-ain-pastg.my.salesforce.com</serverUrl>"""}
+    content = '<?xml version="1.0" encoding="UTF-8"?>'
+    content += "<sessionId>00D7A0000009g88!AQQAQEev5W85xCXM0urY0oRblZuM6</sessionId>"
+    content += "<serverUrl>https://2u-dom-ain-pastg.my.salesforce.com</serverUrl>"
+    return {'status_code': 200, 'content': content}
 
 
 def test_salesforce_connection():
