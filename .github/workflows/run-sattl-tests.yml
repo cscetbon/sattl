@@ -13,9 +13,13 @@ jobs:
         sudo apt-get -y -qq install --no-install-recommends build-essential
     - name: Copy test config
       run: cp .github/workflows/config.json.sample config.json
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ hashFiles('setup.cfg') }}
     - name: Setup dependencies
       run: |
-        pip install --no-cache-dir -i https://tech-pypi-prod.2u.com/simple -e .
-        pip install --no-cache-dir -i https://tech-pypi-prod.2u.com/simple '.[testing]'
+        pip install -i https://tech-pypi-prod.2u.com/simple -e .
+        pip install -i https://tech-pypi-prod.2u.com/simple '.[testing]'
     - name: Run tests
       run: python -m pytest
