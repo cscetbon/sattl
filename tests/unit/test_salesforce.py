@@ -17,10 +17,11 @@ def test_salesforce_connection():
     config = Config(is_sandbox=True, domain="dom-ain")
     with HTTMock(salesforce_login):
         sf_connection = SalesforceConnection(config)
-    assert sf_connection.sf_version == "53.0"
-    assert sf_connection.domain == "test"
-    assert sf_connection.sf_instance == ""
-    assert sf_connection.auth_type == "password"
+    sf = sf_connection.sf
+    assert sf.sf_version == "53.0"
+    assert sf.domain == "test"
+    assert sf.sf_instance == "2u-dom-ain-pastg.my.salesforce.com"
+    assert sf.auth_type == "password"
 
 
 # def test_salesforce_matches():
