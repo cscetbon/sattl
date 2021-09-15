@@ -58,11 +58,16 @@ def query_record_type(*_):
                     ('Id', '0123t000000FkA9AAK')])])
     ])
 
-def test_salesforce_connection():
+
+@pytest.fixture
+def salesforce_connection():
     config = Config(is_sandbox=True, domain="dom-ain")
     with HTTMock(salesforce_login):
-        sf_connection = SalesforceConnection(config)
-    sf = sf_connection.sf
+        return SalesforceConnection(config)
+
+
+def test_salesforce_connection(salesforce_connection):
+    sf = salesforce_connection.sf
     assert sf.sf_version == "53.0"
     assert sf.domain == "test"
     assert sf.sf_instance == "2u-dom-ain-pastg.my.salesforce.com"
@@ -75,14 +80,12 @@ def test_salesforce_external_id():
     assert sf_external_id.value == "VALUE"
 
 
-def test_salesforce_valid_relation():
+def test_salesforce_valid_relation(salesforce_connection):
     sf_relation = SalesforceRelation({"Type": "Contact", "Name": "Cyril"})
     assert sf_relation.type == "Contact"
     assert sf_relation.external_id == SalesforceExternalID("Name", "Cyril")
-    config = Config(is_sandbox=True, domain="dom-ain")
-    with HTTMock(salesforce_login), patch("simple_salesforce.api.Salesforce.query", query_account):
-        sf_connection = SalesforceConnection(config)
-        assert sf_relation.get_id(sf_connection) == "0017A00000kkHm8QAE"
+    with patch("simple_salesforce.api.Salesforce.query", query_account):
+        assert sf_relation.get_id(salesforce_connection) == "0017A00000kkHm8QAE"
 
 
 @pytest.mark.parametrize('content,error_msg', [
@@ -96,11 +99,9 @@ def test_salesforce_invalid_relation(content, error_msg):
     assert error_msg in str(exc)
 
 
-def test_salesforce_get():
+def test_salesforce_get(salesforce_connection):
     config = Config(is_sandbox=True, domain="dom-ain")
-    with HTTMock(salesforce_login):
-        sf_connection = SalesforceConnection(config)
-    sf_object = SalesforceObject(sf_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
+    sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     with patch("simple_salesforce.api.Salesforce.query", query_account):
         assert sf_object.get() is True
         assert sf_object.refreshed is True
@@ -113,11 +114,8 @@ def test_salesforce_get():
                                  'SIS_Phone__pc': None}
 
 
-def test_salesforce_matches():
-    config = Config(is_sandbox=True, domain="dom-ain")
-    with HTTMock(salesforce_login):
-        sf_connection = SalesforceConnection(config)
-    sf_object = SalesforceObject(sf_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
+def test_salesforce_matches(salesforce_connection):
+    sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     with patch("simple_salesforce.api.Salesforce.query", query_account):
         assert sf_object.get() is True
     content = """
@@ -133,7 +131,7 @@ def test_salesforce_matches():
         University_Email__c: jdoe@test.com
     """
     content = CaseInsensitiveDict(yaml.load(content, Loader=yaml.FullLoader))
-    local_sf_object = SalesforceObject(sf_connection, content)
+    local_sf_object = SalesforceObject(salesforce_connection, content)
     with patch("simple_salesforce.api.Salesforce.query", query_record_type):
         assert sf_object.matches(local_sf_object) is True
 
