@@ -1,6 +1,12 @@
-from sattl.salesforce import SalesforceConnection
+import pytest
+
+from sattl.salesforce import SalesforceConnection, SalesforceObject, SalesforceRelation, SalesforceExternalID
 from sattl.config import Config
+from requests.structures import CaseInsensitiveDict
+import yaml
 from httmock import urlmatch, HTTMock
+from collections import OrderedDict
+from mock import patch
 
 
 @urlmatch(scheme='https', netloc='test.salesforce.com', path=r'/services/Soap/u/53.0', method='post')
@@ -13,6 +19,45 @@ def salesforce_login(*_):
     """}
 
 
+def query_account(*_):
+    return OrderedDict([('totalSize', 1),
+        ('done', True),
+        ('records',
+        [OrderedDict([('attributes',
+                     OrderedDict([('type', 'Account'),
+                                  ('url',
+                                   '/services/data/v53.0/sobjects/Account/0017A00000kkHm8QAE')])),
+                    ('Id', '0017A00000kkHm8QAE'),
+                    ('Name', 'Mug Coffee'),
+                    ('RecordTypeId', '0123t000000FkA9AAK'),
+                    ('Student_Type__c', 'Enrolled'),
+                    ('UUID__c', 'b2a1da8b-b68b-42b6-81e7-dc89ce6e86f0'),
+                    ('University_ID__c', '100087987'),
+                    ('University_Email__c', 'jdoe@test.com'),
+                    ('SIS_Cohort__c', None),
+                    ('SIS_Email__c', None),
+                    ('SIS_First_Name__c', 'Mug'),
+                    ('SIS_Last_Name__c', 'Coffee'),
+                    ('Contact_Record_ID__pc', '0037A00000dU8Sv'),
+                    ('SIS_Email__pc', None),
+                    ('SIS_First_Name__pc', None),
+                    ('SIS_Last_Name__pc', None),
+                    ('SIS_Phone__pc', None)])
+        ]
+    )])
+
+
+def query_record_type(*_):
+    return OrderedDict([('totalSize', 1),
+        ('done', True),
+        ('records',
+        [OrderedDict([('attributes',
+                     OrderedDict([('type', 'RecordType'),
+                                  ('url',
+                                   '/services/data/v53.0/sobjects/RecordType/0123t000000FkA9AAK')])),
+                    ('Id', '0123t000000FkA9AAK')])])
+    ])
+
 def test_salesforce_connection():
     config = Config(is_sandbox=True, domain="dom-ain")
     with HTTMock(salesforce_login):
@@ -24,51 +69,79 @@ def test_salesforce_connection():
     assert sf.auth_type == "password"
 
 
-# def test_salesforce_matches():
-#     config = Config(is_sandbox=True, domain="dom-ain")
-#     sf_connection = SalesforceConnection(config)
-#     content = """
-#         type: Account
-#         externalIDs:
-#           Slug__c: XC-2
-#         fields:
-#           sis_first_name__c: John
-#           sis_last_name__c: Doe
-#           University_Email__c: jdoe@test.com
-#         relation:
-#           record:
-#             type: RecordType
-#             name: SIS Student
-#     """
-#     sf_object = SalesforceObject(content=yaml.load(content))
-#     # Patch query to return an object with same content
-#     assert sf_object.get() == sf_object
+def test_salesforce_external_id():
+    sf_external_id = SalesforceExternalID("KEY", "VALUE")
+    assert sf_external_id.field == "KEY"
+    assert sf_external_id.value == "VALUE"
+
+
+def test_salesforce_valid_relation():
+    sf_relation = SalesforceRelation({"Type": "Contact", "Name": "Cyril"})
+    assert sf_relation.type == "Contact"
+    assert sf_relation.external_id == SalesforceExternalID("Name", "Cyril")
+    config = Config(is_sandbox=True, domain="dom-ain")
+    with HTTMock(salesforce_login), patch("simple_salesforce.api.Salesforce.query", query_account):
+        sf_connection = SalesforceConnection(config)
+        assert sf_relation.get_id(sf_connection) == "0017A00000kkHm8QAE"
+
+
+@pytest.mark.parametrize('content,error_msg', [
+    (None, "content used to initialize SalesforceRelation can't be empty"),
+    ({"Name": "Cyril"}, "relation must have 2 keys with one being type"),
+    ({"Typo": "Contact", "Name": "Cyril"}, "relation must have 2 keys with one being type"),
+])
+def test_salesforce_invalid_relation(content, error_msg):
+    with pytest.raises(AttributeError) as exc:
+        SalesforceRelation(content)
+    assert error_msg in str(exc)
+
+
+def test_salesforce_get():
+    config = Config(is_sandbox=True, domain="dom-ain")
+    with HTTMock(salesforce_login):
+        sf_connection = SalesforceConnection(config)
+    sf_object = SalesforceObject(sf_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
+    with patch("simple_salesforce.api.Salesforce.query", query_account):
+        assert sf_object.get() is True
+        assert sf_object.refreshed is True
+    assert sf_object.content == {'Id': '0017A00000kkHm8QAE', 'Name': 'Mug Coffee', 'RecordTypeId': '0123t000000FkA9AAK',
+                                 'Student_Type__c': 'Enrolled', 'UUID__c': 'b2a1da8b-b68b-42b6-81e7-dc89ce6e86f0',
+                                 'University_ID__c': '100087987', 'University_Email__c': 'jdoe@test.com',
+                                 'SIS_Cohort__c': None, 'SIS_Email__c': None, 'SIS_First_Name__c': 'Mug',
+                                 'SIS_Last_Name__c': 'Coffee', 'Contact_Record_ID__pc': '0037A00000dU8Sv',
+                                 'SIS_Email__pc': None, 'SIS_First_Name__pc': None, 'SIS_Last_Name__pc': None,
+                                 'SIS_Phone__pc': None}
+
+
+def test_salesforce_matches():
+    config = Config(is_sandbox=True, domain="dom-ain")
+    with HTTMock(salesforce_login):
+        sf_connection = SalesforceConnection(config)
+    sf_object = SalesforceObject(sf_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
+    with patch("simple_salesforce.api.Salesforce.query", query_account):
+        assert sf_object.get() is True
+    content = """
+        type: Account
+        externalID:
+          Slug__c: XC-2
+        relations:
+          RecordTypeId:
+            type: RecordType
+            name: SIS Student
+        SIS_First_Name__c: Mug
+        SIS_Last_Name__c: Coffee
+        University_Email__c: jdoe@test.com
+    """
+    content = CaseInsensitiveDict(yaml.load(content, Loader=yaml.FullLoader))
+    local_sf_object = SalesforceObject(sf_connection, content)
+    with patch("simple_salesforce.api.Salesforce.query", query_record_type):
+        assert sf_object.matches(local_sf_object) is True
+
+    local_sf_object.content["SIS_First_Name__c"] = "joe"
+    assert sf_object.matches(local_sf_object) is False
+
+
 #
-#
-# def test_salesforce_get():
-#     config = Config(is_sandbox=True, domain="dom-ain")
-#     sf_connection = SalesforceConnection(config)
-#     content = """
-#         type: Account
-#         externalIDs:
-#           Slug__c: XC-2
-#         fields:
-#           sis_first_name__c: John
-#           sis_last_name__c: Doe
-#           University_Email__c: jdoe@test.com
-#         relation:
-#           record:
-#             type: RecordType
-#             name: SIS Student
-#     """
-#     sf_object = SalesforceObject(content=yaml.load(content))
-#     # Patch query to return an object with same content
-#     assert sf_object.get() == sf_object
-#     # keyValue, err := externalID(obj)
-#     # soql := fmt.Sprintf("SELECT ID FROM %s WHERE %s = %s", obj.Type, keyValue.key, keyValue.value)
-#     # result, err := r.Client.Query(soql)
-#     # oid := result.Records[0]["Id"].(string)
-#     # res := r.Client.SObject(obj.Type).Get(oid)
 #
 #
 # def test_salesforce_upsert():
@@ -76,7 +149,7 @@ def test_salesforce_connection():
 #     sf_connection = SalesforceConnection(config)
 #     content = """
 #         type: Account
-#         externalIDs:
+#         externalID:
 #           Slug__c: XC-2
 #         fields:
 #           sis_first_name__c: John
@@ -97,7 +170,7 @@ def test_salesforce_connection():
 #     sf_connection = SalesforceConnection(config)
 #     content = """
 #         type: Account
-#         externalIDs:
+#         externalID:
 #           Slug__c: XC-2
 #     """
 #     sf_object = SalesforceObject(content=yaml.load(content))
