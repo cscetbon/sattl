@@ -1,4 +1,4 @@
-from simple_salesforce import Salesforce
+from simple_salesforce import Salesforce, SalesforceResourceNotFound
 from sattl.config import Config
 from requests.structures import CaseInsensitiveDict
 
@@ -29,10 +29,6 @@ class SalesforceExternalID:
         return f"{self.__class__.__name__}(field={self.field}, value={self.value})"
 
 
-def soql_from_type_and_external_id(fields:str, _type: str, external_id: SalesforceExternalID):
-    return f'SELECT {fields} FROM {_type} WHERE {external_id.field} = "{external_id.value}" LIMIT 1'
-
-
 class SalesforceRelation:
 
     def __init__(self, content):
@@ -45,12 +41,12 @@ class SalesforceRelation:
         self.external_id = SalesforceExternalID(*[(k,v) for k,v in _content.items() if k.lower() != TYPE][0])
 
     def get_id(self, salesforce_connection: SalesforceConnection):
-        result = salesforce_connection.sf.query(soql_from_type_and_external_id("ID", self.type, self.external_id))
-        if not result or result.get("totalSize", 0) != 1:
-            raise AttributeError(f'record of type {self.type} with {self.external_id.field} having '
-                                 f'the value "{self.external_id.value}" cannot be found')
-
-        return result["records"][0]["Id"]
+        key, value = self.external_id.field, self.external_id.value
+        try:
+            result = salesforce_connection.sf.__getattr__("self.type").get_by_custom_id(key, value)
+            return result["Id"]
+        except SalesforceResourceNotFound:
+            raise AttributeError(f'record of type {self.type} with {key} having the value "{value}" cannot be found')
 
 
 def _insensitive_content(content: dict):
@@ -99,14 +95,14 @@ class SalesforceObject:
                 sf_object.refreshed = True
 
         other_content = _insensitive_content(other.content)
-        if any([self.content.get(field) != other_content.get(field) for field in other_content]):
-            return False
-        return True
+        return not any([self.content.get(field) != other_content.get(field) for field in other_content])
 
     def get(self):
-        result = self.sf.query(soql_from_type_and_external_id("FIELDS(ALL)", self.type, self.external_id))
-        if result and result.get("totalSize", 0) == 1:
-            self.content = CaseInsensitiveDict(result["records"][0])
-            del self.content["attributes"]
+        try:
+            result = self.sf.__getattr__("self.type").get_by_custom_id(self.external_id.field, self.external_id.value)
+            del result["attributes"]
+            self.content = CaseInsensitiveDict(result)
             self.refreshed = True
             return True
+        except SalesforceResourceNotFound:
+            pass

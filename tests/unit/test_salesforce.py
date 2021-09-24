@@ -20,10 +20,7 @@ def salesforce_login(*_):
 
 
 def query_account(*_):
-    return OrderedDict([('totalSize', 1),
-        ('done', True),
-        ('records',
-        [OrderedDict([('attributes',
+    return OrderedDict([('attributes',
                      OrderedDict([('type', 'Account'),
                                   ('url',
                                    '/services/data/v53.0/sobjects/Account/0017A00000kkHm8QAE')])),
@@ -37,20 +34,14 @@ def query_account(*_):
                     ('SIS_Email__c', None),
                     ('SIS_First_Name__c', 'Mug'),
                     ('SIS_Last_Name__c', 'Coffee')])
-        ]
-    )])
 
 
 def query_record_type(*_):
-    return OrderedDict([('totalSize', 1),
-        ('done', True),
-        ('records',
-        [OrderedDict([('attributes',
+    return OrderedDict([('attributes',
                      OrderedDict([('type', 'RecordType'),
                                   ('url',
                                    '/services/data/v53.0/sobjects/RecordType/0123t000000FkA9AAK')])),
-                    ('Id', '0123t000000FkA9AAK')])])
-    ])
+                    ('Id', '0123t000000FkA9AAK')])
 
 
 @pytest.fixture
@@ -78,7 +69,7 @@ def test_salesforce_valid_relation(salesforce_connection):
     sf_relation = SalesforceRelation({"Type": "Contact", "Name": "Cyril"})
     assert sf_relation.type == "Contact"
     assert sf_relation.external_id == SalesforceExternalID("Name", "Cyril")
-    with patch("simple_salesforce.api.Salesforce.query", query_account):
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
         assert sf_relation.get_id(salesforce_connection) == "0017A00000kkHm8QAE"
 
 
@@ -94,9 +85,8 @@ def test_salesforce_invalid_relation(content, error_msg):
 
 
 def test_salesforce_get(salesforce_connection):
-    config = Config(is_sandbox=True, domain="dom-ain")
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
-    with patch("simple_salesforce.api.Salesforce.query", query_account):
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
         assert sf_object.get() is True
         assert sf_object.refreshed is True
     assert sf_object.content == {'Id': '0017A00000kkHm8QAE', 'Name': 'Mug Coffee', 'RecordTypeId': '0123t000000FkA9AAK',
@@ -107,7 +97,7 @@ def test_salesforce_get(salesforce_connection):
 
 def test_salesforce_matches(salesforce_connection):
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
-    with patch("simple_salesforce.api.Salesforce.query", query_account):
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
         assert sf_object.get() is True
     content = """
         type: Account
@@ -123,7 +113,7 @@ def test_salesforce_matches(salesforce_connection):
     """
     content = CaseInsensitiveDict(yaml.load(content, Loader=yaml.FullLoader))
     local_sf_object = SalesforceObject(salesforce_connection, content)
-    with patch("simple_salesforce.api.Salesforce.query", query_record_type):
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", query_record_type):
         assert sf_object.matches(local_sf_object) is True
 
     local_sf_object.content["SIS_First_Name__c"] = "joe"
