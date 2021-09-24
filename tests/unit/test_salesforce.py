@@ -1,13 +1,13 @@
 import pytest
-
-from sattl.salesforce import SalesforceConnection, SalesforceObject, SalesforceRelation, SalesforceExternalID
-from sattl.config import Config
-from simple_salesforce import SalesforceResourceNotFound, SalesforceError
-from requests.structures import CaseInsensitiveDict
 import yaml
+from requests.structures import CaseInsensitiveDict
 from httmock import urlmatch, HTTMock
 from collections import OrderedDict
-from mock import patch
+from mock import patch, Mock
+
+from simple_salesforce import SalesforceResourceNotFound
+from sattl.salesforce import SalesforceConnection, SalesforceObject, SalesforceRelation, SalesforceExternalID
+from sattl.config import Config
 
 
 @urlmatch(scheme='https', netloc='test.salesforce.com', path=r'/services/Soap/u/53.0', method='post')
@@ -85,6 +85,26 @@ def test_salesforce_invalid_relation(content, error_msg):
     assert error_msg in str(exc)
 
 
+def test_salesforce_object():
+    sf_object = SalesforceObject(Mock(), dict(type="Account", externalID={"Slug__c": "XC-2"},
+                                              status="enrolled", location="Cannes"))
+    assert sf_object.type == "Account"
+    assert sf_object.external_id == SalesforceExternalID("Slug__c", "XC-2")
+    assert sf_object.content == dict(status="enrolled", location="Cannes")
+
+
+def test_salesforce_refresh_relations(salesforce_connection):
+    sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
+    sf_object.refresh_relations()
+    assert sf_object.refreshed is False
+
+    relation_mock = Mock()
+    sf_object.relations = {"field": relation_mock}
+    sf_object.refresh_relations()
+    assert sf_object.refreshed is True
+    assert sf_object.content["field"] == relation_mock.get_id(sf_object.sf_connection)
+
+
 def test_salesforce_get(salesforce_connection):
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
@@ -131,3 +151,34 @@ def test_salesforce_delete(salesforce_connection):
 
     with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=SalesforceResourceNotFound(*("",)*4)):
         assert sf_object.delete() is False
+
+
+def test_salesforce_upsert(salesforce_connection):
+    content = """
+        type: Account
+        ID: something
+        externalID:
+          Slug__c: XC-2
+        relations:
+          record:
+            type: RecordType
+            name: SIS Student
+        SIS_First_Name__c: Mug
+        SIS_Last_Name__c: Coffee
+        University_Email__c: jdoe@test.com
+    """
+    sf_object = SalesforceObject(salesforce_connection, content=yaml.load(content, Loader=yaml.FullLoader))
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", query_record_type):
+        with patch("simple_salesforce.api.SFType.upsert", return_value=204):
+            assert sf_object.upsert() is True
+
+    assert sf_object.content == {
+        'SIS_First_Name__c': 'Mug',
+        'SIS_Last_Name__c': 'Coffee',
+        'University_Email__c': 'jdoe@test.com',
+        'record': '0123t000000FkA9AAK'
+    }
+    assert sf_object.refreshed is True
+
+    with patch("simple_salesforce.api.SFType.upsert", side_effect=SalesforceResourceNotFound(*("",)*4)):
+        assert sf_object.upsert() is False

@@ -43,8 +43,7 @@ class SalesforceRelation:
     def get_id(self, salesforce_connection: SalesforceConnection):
         key, value = self.external_id.field, self.external_id.value
         try:
-            result = salesforce_connection.sf.__getattr__("self.type").get_by_custom_id(key, value)
-            return result["Id"]
+            return salesforce_connection.sf.__getattr__("self.type").get_by_custom_id(key, value)["Id"]
         except SalesforceResourceNotFound:
             raise AttributeError(f'record of type {self.type} with {key} having the value "{value}" cannot be found')
 
@@ -65,7 +64,7 @@ class SalesforceObject:
                 raise AttributeError(f"{field} not found in content passed")
         if not _content[EXTERNAL_ID] or len(_content[EXTERNAL_ID]) != 1:
             raise AttributeError("externalID can't be empty and must have only one entry")
-        relations = _content.get(RELATIONS, {})
+        relations = _content.pop(RELATIONS, {})
         for field, relation in relations.items():
             if len(relation) != 2 or TYPE not in relation:
                 raise AttributeError("relation must have 2 keys with one being type and the other one and external ID")
@@ -81,6 +80,12 @@ class SalesforceObject:
     def __eq__(self, other):
         return self.content == other.content
 
+    def refresh_relations(self):
+        if not self.refreshed and (relations := self.relations.items()):
+            for field, relation in relations:
+                self.content[field] = relation.get_id(self.sf_connection)
+            self.refreshed = True
+
     def matches(self, other):
         """
         To match other, self needs to have the same type, the same external id and other's content
@@ -89,10 +94,7 @@ class SalesforceObject:
         if self.type != other.type or self.external_id != other.external_id:
             return False
         for sf_object in [self, other]:
-            if not sf_object.refreshed and (relations := sf_object.relations.items()):
-                for field, relation in relations:
-                    sf_object.content[field] = relation.get_id(self.sf_connection)
-                sf_object.refreshed = True
+            sf_object.refresh_relations()
 
         other_content = _insensitive_content(other.content)
         return not any([self.content.get(field) != other_content.get(field) for field in other_content])
@@ -110,9 +112,20 @@ class SalesforceObject:
 
     def delete(self):
         try:
-            sf_object = self.sf.__getattr__("self.type")
-            result = sf_object.get_by_custom_id(self.external_id.field, self.external_id.value)
-            sf_object.delete(result["Id"])
+            sf_type = self.sf.__getattr__("self.type")
+            result = sf_type.get_by_custom_id(self.external_id.field, self.external_id.value)
+            sf_type.delete(result["Id"])
+            return True
+        except SalesforceResourceNotFound:
+            pass
+        return False
+
+    def upsert(self):
+        try:
+            self.refresh_relations()
+            self.content.pop("Id", None)
+            sf_type = self.sf.__getattr__("self.type")
+            sf_type.upsert(f"{self.external_id.field}/{self.external_id.value}", self.content)
             return True
         except SalesforceResourceNotFound:
             pass
