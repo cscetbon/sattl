@@ -106,3 +106,14 @@ class SalesforceObject:
             return True
         except SalesforceResourceNotFound:
             pass
+        return False
+
+    def delete(self):
+        try:
+            sf_object = self.sf.__getattr__("self.type")
+            result = sf_object.get_by_custom_id(self.external_id.field, self.external_id.value)
+            sf_object.delete(result["Id"])
+            return True
+        except SalesforceResourceNotFound:
+            pass
+        return False

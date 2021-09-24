@@ -2,6 +2,7 @@ import pytest
 
 from sattl.salesforce import SalesforceConnection, SalesforceObject, SalesforceRelation, SalesforceExternalID
 from sattl.config import Config
+from simple_salesforce import SalesforceResourceNotFound, SalesforceError
 from requests.structures import CaseInsensitiveDict
 import yaml
 from httmock import urlmatch, HTTMock
@@ -120,39 +121,13 @@ def test_salesforce_matches(salesforce_connection):
     assert sf_object.matches(local_sf_object) is False
 
 
-#
-#
-#
-# def test_salesforce_upsert():
-#     config = Config(is_sandbox=True, domain="dom-ain")
-#     sf_connection = SalesforceConnection(config)
-#     content = """
-#         type: Account
-#         externalID:
-#           Slug__c: XC-2
-#         fields:
-#           sis_first_name__c: John
-#           University_Email__c: danny@test.com
-#         relation:
-#           record:
-#             type: RecordType
-#             name: SIS Student
-#     """
-#     sf_object = SalesforceObject(content=yaml.load(content))
-#     sf_object.upsert()
-#     # Patch query to return an object with same content
-#     assert sf_object.get() == sf_object
-#
-#
-# def test_salesforce_delete():
-#     config = Config(is_sandbox=True, domain="dom-ain")
-#     sf_connection = SalesforceConnection(config)
-#     content = """
-#         type: Account
-#         externalID:
-#           Slug__c: XC-2
-#     """
-#     sf_object = SalesforceObject(content=yaml.load(content))
-#     # Patch query to return an object with same content
-#     sf_object.delete()
-#     # assert query is DELETE FROM Account WHERE Slug__c = "XC-2"
+def test_salesforce_delete(salesforce_connection):
+    sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
+        with patch("simple_salesforce.api.SFType.delete", return_value=204):
+            assert sf_object.delete() is True
+        with patch("simple_salesforce.api.SFType.delete", side_effect=SalesforceResourceNotFound(*("",)*4)):
+            assert sf_object.delete() is False
+
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=SalesforceResourceNotFound(*("",)*4)):
+        assert sf_object.delete() is False
