@@ -9,6 +9,8 @@ from simple_salesforce import SalesforceResourceNotFound
 from sattl.salesforce import SalesforceConnection, SalesforceObject, SalesforceRelation, SalesforceExternalID
 from sattl.config import Config
 
+SF_EXCEPTION_RESOURCE_NOT_FOUND = SalesforceResourceNotFound(*("",) * 4)
+
 
 @urlmatch(scheme='https', netloc='test.salesforce.com', path=r'/services/Soap/u/53.0', method='post')
 def salesforce_login(*_):
@@ -154,10 +156,10 @@ def test_salesforce_delete(salesforce_connection):
     with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
         with patch("simple_salesforce.api.SFType.delete", return_value=204):
             assert sf_object.delete() is True
-        with patch("simple_salesforce.api.SFType.delete", side_effect=SalesforceResourceNotFound(*("",)*4)):
+        with patch("simple_salesforce.api.SFType.delete", side_effect=SF_EXCEPTION_RESOURCE_NOT_FOUND):
             assert sf_object.delete() is False
 
-    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=SalesforceResourceNotFound(*("",)*4)):
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=SF_EXCEPTION_RESOURCE_NOT_FOUND):
         assert sf_object.delete() is False
 
 
@@ -188,5 +190,5 @@ def test_salesforce_upsert(salesforce_connection):
     }
     assert sf_object.refreshed is True
 
-    with patch("simple_salesforce.api.SFType.upsert", side_effect=SalesforceResourceNotFound(*("",)*4)):
+    with patch("simple_salesforce.api.SFType.upsert", side_effect=SF_EXCEPTION_RESOURCE_NOT_FOUND):
         assert sf_object.upsert() is False
