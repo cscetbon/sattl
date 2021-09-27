@@ -101,7 +101,7 @@ class SalesforceObject:
 
     def get(self):
         try:
-            result = self.sf.__getattr__("self.type").get_by_custom_id(self.external_id.field, self.external_id.value)
+            result = self.sf_type.get_by_custom_id(self.external_id.field, self.external_id.value)
             del result["attributes"]
             self.content = CaseInsensitiveDict(result)
             self.refreshed = True
@@ -112,9 +112,8 @@ class SalesforceObject:
 
     def delete(self):
         try:
-            sf_type = self.sf.__getattr__("self.type")
-            result = sf_type.get_by_custom_id(self.external_id.field, self.external_id.value)
-            sf_type.delete(result["Id"])
+            result = self.sf_type.get_by_custom_id(self.external_id.field, self.external_id.value)
+            self.sf_type.delete(result["Id"])
             return True
         except SalesforceResourceNotFound:
             pass
@@ -124,9 +123,12 @@ class SalesforceObject:
         try:
             self.refresh_relations()
             self.content.pop("Id", None)
-            sf_type = self.sf.__getattr__("self.type")
-            sf_type.upsert(f"{self.external_id.field}/{self.external_id.value}", self.content)
+            self.sf_type.upsert(f"{self.external_id.field}/{self.external_id.value}", self.content)
             return True
         except SalesforceResourceNotFound:
             pass
         return False
+
+    @property
+    def sf_type(self):
+        return self.sf.__getattr__(self.type)

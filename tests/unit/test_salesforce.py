@@ -88,9 +88,11 @@ def test_salesforce_invalid_relation(content, error_msg):
 
 
 def test_salesforce_object():
-    sf_object = SalesforceObject(Mock(), dict(type="Account", externalID={"Slug__c": "XC-2"},
+    sf_conn_mock = Mock()
+    sf_object = SalesforceObject(sf_conn_mock, dict(type="Account", externalID={"Slug__c": "XC-2"},
                                               status="enrolled", location="Cannes"))
     assert sf_object.type == "Account"
+    assert sf_object.sf_type == sf_conn_mock.sf.Account
     assert sf_object.external_id == SalesforceExternalID("Slug__c", "XC-2")
     assert sf_object.content == dict(status="enrolled", location="Cannes")
 
