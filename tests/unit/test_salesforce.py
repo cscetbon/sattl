@@ -170,7 +170,7 @@ def test_salesforce_upsert(salesforce_connection):
         externalID:
           Slug__c: XC-2
         relations:
-          record:
+          RecordTypeId:
             type: RecordType
             name: SIS Student
         SIS_First_Name__c: Mug
@@ -186,7 +186,7 @@ def test_salesforce_upsert(salesforce_connection):
         'SIS_First_Name__c': 'Mug',
         'SIS_Last_Name__c': 'Coffee',
         'University_Email__c': 'jdoe@test.com',
-        'record': '0123t000000FkA9AAK'
+        'RecordTypeId': '0123t000000FkA9AAK'
     }
     assert sf_object.refreshed is True
 
