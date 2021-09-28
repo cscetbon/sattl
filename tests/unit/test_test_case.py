@@ -1,26 +1,12 @@
 from sattl.test_case import TestCase
-from sattl.test_step import TestStep
 import pytest
 from mock import patch
-
-
-@pytest.mark.parametrize('_assert, manifests', [
-    ("00-assert.yaml", ["00-pa-enrollment-case.yaml"]),
-    (None, ["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"]),
-])
-def test_step(_assert, manifests):
-    step = TestStep(prefix="00", manifests=None, _assert=_assert)
-    assert step.manifests == []
-    assert step._assert == _assert
-    for manifest in manifests:
-        step.append(manifest)
-    assert step.manifests == manifests
 
 
 def test_test_case_fail():
     with pytest.raises(AttributeError) as exc:
         TestCase("/does/not/exists")
-    str(exc.value) == "path /does/not/exists is not readable"
+    assert str(exc.value) == "path /does/not/exists is not readable"
 
 
 def test_test_case():

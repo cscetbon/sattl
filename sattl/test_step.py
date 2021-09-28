@@ -30,11 +30,10 @@ class TestManifest:
     filename: str
     __test__ = False
 
-    def apply(self, value):
+    def apply(self):
         logger.info(f"Applies manifest {self.filename}")
-        if not value:
-            raise Exception(f"{self.__class__.__name__} failed to apply {self.filename}")
-        return value
+        print("raise Exception")
+        raise Exception(f"{self.__class__.__name__} failed to apply {self.filename}")
 
 
 @dataclass
@@ -42,8 +41,6 @@ class TestAssert:
     filename: str
     __test__ = False
 
-    def state(self, value):
+    def state(self):
         logger.info(f"Assert state {self.filename}")
-        if not value:
-            raise Exception(f"{self.__class__.__name__} failed to state {self.filename}")
-        return value
+        raise Exception(f"{self.__class__.__name__} failed to state {self.filename}")
