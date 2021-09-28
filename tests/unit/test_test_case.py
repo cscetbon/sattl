@@ -1,20 +1,20 @@
-from sattl.test_case import TestCase, StepType, Step
-from collections import OrderedDict
+from sattl.test_case import TestCase
+from sattl.test_step import TestStep
 import pytest
 from mock import patch
 
 
-@pytest.mark.parametrize('step_type, elements', [
-    (StepType.Assert, ["00-assert.yaml", "00-pa-enrollment-case.yaml"]),
-    (StepType.Manifest, ["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"]),
+@pytest.mark.parametrize('_assert, manifests', [
+    ("00-assert.yaml", ["00-pa-enrollment-case.yaml"]),
+    (None, ["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"]),
 ])
-def test_step(step_type, elements):
-    step = Step(step_type, None)
-    assert step._type == step_type
-    assert step.content == []
-    for element in elements:
-        step.append(element)
-    assert step.content == elements
+def test_step(_assert, manifests):
+    step = TestStep(prefix="00", manifests=None, _assert=_assert)
+    assert step.manifests == []
+    assert step._assert == _assert
+    for manifest in manifests:
+        step.append(manifest)
+    assert step.manifests == manifests
 
 
 def test_test_case_fail():
@@ -43,14 +43,10 @@ def test_test_case():
 
     assert "00" in test_case.content
     set0 = test_case.content["00"]
-    assert len(set0) == 2
-    assert set0[StepType.Assert] == Step(StepType.Assert, ['00-assert.yaml'])
-    assert set0[StepType.Manifest] == Step(StepType.Manifest,
-                                           ['00-pa-account0-case.yaml', '00-pa-enrollment0-case.yaml'])
+    assert set0._asserts == '00-assert.yaml'
+    assert set0.manifests == ['00-pa-account0-case.yaml', '00-pa-enrollment0-case.yaml']
 
     assert "01" in test_case.content
     set1 = test_case.content["01"]
-    assert len(set1) == 2
-    assert set1[StepType.Assert] == Step(StepType.Assert, ['01-assert.yaml'])
-    assert set1[StepType.Manifest] == Step(StepType.Manifest,
-                                           ['01-pa-enrollment1-case.yaml', '01-pa-enrollment1-case.yaml'])
+    assert set1._asserts == '01-assert.yaml'
+    assert set1.manifests == ['01-pa-enrollment1-case.yaml', '01-pa-enrollment1-case.yaml']

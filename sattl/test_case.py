@@ -1,20 +1,21 @@
 import os
-from enum import Enum
+from typing import Dict
 from collections import OrderedDict
 from sattl.logger import logger
-from typing import List
-from dataclasses import dataclass, field
+from sattl.test_step import TestStep
+
 
 DELIMITER = "-"
 
 
 class TestCase:
+    __test__ = False
 
     def __init__(self, path):
         if not os.access(path, os.R_OK):
             raise AttributeError(f"path {path} is not readable")
         self.path = path
-        self.content = OrderedDict()
+        self.content: Dict[str, TestStep] = OrderedDict()
 
     def setup(self):
         for f in sorted(os.listdir(self.path)):
@@ -24,28 +25,12 @@ class TestCase:
             if not len(prefix):
                 logger.warning(f"Prefix of file {f} is empty")
                 continue
-            step_type = StepType.Assert
+            step = self.content.setdefault(prefix, TestStep(prefix))
             if "assert" not in f.lower():
-                step_type = StepType.Manifest
-            self.content.setdefault(prefix, {}).setdefault(step_type, Step(step_type)).append(f)
+                step.append(f)
+                continue
+            step._asserts = f
 
     def run(self):
-        pass
-
-
-class StepType(Enum):
-    Manifest = 1
-    Assert = 2
-
-
-@dataclass
-class Step:
-    _type: StepType
-    content: List[str] = field(default_factory=list)
-
-    def __post_init__(self):
-        if self.content is None:
-            self.content = []
-
-    def append(self, f):
-        self.content.append(f)
+        for _, step in self.content.items():
+            step.run()
