@@ -9,14 +9,17 @@
 
 # Jargon
 
-- Manifest
+### Manifest
 YAML file containing one or more objects to be created in Salesforce
-- Assert
-YAML file containing one or more objects that must exist and match in Salesforce 
-- Test Step
+
+### Assert
+YAML file containing one or more objects that must exist and match in Salesforce
+
+### Test Step
 Set of as many Manifests wanted and at most one Assert. A Test Step could consist of only Manifests or an Assert
-- Test Case
-Set of Test Steps. Test Steps are ordered alphabetically and grouped by their prefix 
+
+### Test Case
+Set of Test Steps. Test Steps are ordered alphabetically and grouped by their prefix
 
 # Using Sattl
 
