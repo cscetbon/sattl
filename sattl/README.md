@@ -53,6 +53,7 @@ Let us imagining we have the following
     ├── 00-account.yaml
     ├── 00-course-and-section.yaml
     ├── 00-enrollment.yaml
+    ├── 01-assert.yaml
     └── 01-case.yaml
 ```
 We are going to look at the different parts of this Test Case
