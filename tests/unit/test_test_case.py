@@ -9,7 +9,7 @@ from mock import patch
     (StepType.Manifest, ["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"]),
 ])
 def test_step(step_type, elements):
-    step = Step(step_type)
+    step = Step(step_type, None)
     assert step._type == step_type
     assert step.content == []
     for element in elements:

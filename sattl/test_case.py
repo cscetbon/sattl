@@ -43,5 +43,9 @@ class Step:
     _type: StepType
     content: List[str] = field(default_factory=list)
 
+    def __post_init__(self):
+        if self.content is None:
+            self.content = []
+
     def append(self, f):
         self.content.append(f)
