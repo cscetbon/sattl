@@ -20,6 +20,30 @@ class TestStep:
     def run(self):
         logger.info(f"Running step {self.prefix}")
         for manifest in self.manifests:
-            logger.info(f"Applies manifest {manifest}")
+            TestManifest(manifest).apply()
         if self._assert:
-            logger.info(f"Assert state {self._assert}")
+            TestAssert(self._assert).state()
+
+
+@dataclass
+class TestManifest:
+    filename: str
+    __test__ = False
+
+    def apply(self, value):
+        logger.info(f"Applies manifest {self.filename}")
+        if not value:
+            raise Exception(f"{self.__class__.__name__} failed to apply {self.filename}")
+        return value
+
+
+@dataclass
+class TestAssert:
+    filename: str
+    __test__ = False
+
+    def state(self, value):
+        logger.info(f"Assert state {self.filename}")
+        if not value:
+            raise Exception(f"{self.__class__.__name__} failed to state {self.filename}")
+        return value
