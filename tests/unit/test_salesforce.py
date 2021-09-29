@@ -55,11 +55,11 @@ def salesforce_connection():
 
 
 def test_salesforce_connection(salesforce_connection):
-    sf = salesforce_connection.sf
-    assert sf.sf_version == "53.0"
-    assert sf.domain == "test"
-    assert sf.sf_instance == "2u-dom-ain-pastg.my.salesforce.com"
-    assert sf.auth_type == "password"
+    sf_conn = salesforce_connection
+    assert sf_conn.sf_version == "53.0"
+    assert sf_conn.domain == "test"
+    assert sf_conn.sf_instance == "2u-dom-ain-pastg.my.salesforce.com"
+    assert sf_conn.auth_type == "password"
 
 
 def test_salesforce_external_id():
@@ -92,7 +92,7 @@ def test_salesforce_object():
     sf_object = SalesforceObject(sf_conn_mock, dict(type="Account", externalID={"Slug__c": "XC-2"},
                                               status="enrolled", location="Cannes"))
     assert sf_object.type == "Account"
-    assert sf_object.sf_type == sf_conn_mock.sf.Account
+    assert sf_object.sf_type == sf_conn_mock.Account
     assert sf_object.external_id == SalesforceExternalID("Slug__c", "XC-2")
     assert sf_object.content == dict(status="enrolled", location="Cannes")
 

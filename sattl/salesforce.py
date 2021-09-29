@@ -8,13 +8,13 @@ RELATIONS = "relations"
 TYPE = "type"
 
 
-class SalesforceConnection:
+class SalesforceConnection(Salesforce):
 
     def __init__(self, config: Config):
         opts = dict(version="53.0")
         if config.is_sandbox:
             opts["domain"] = "test"
-        self.sf = Salesforce(username=config.sf_username, password=config.sf_username, security_token="", **opts)
+        super().__init__(username=config.sf_username, password=config.sf_username, security_token="", **opts)
 
 
 class SalesforceExternalID:
@@ -45,7 +45,7 @@ class SalesforceRelation:
     def get_id(self, salesforce_connection: SalesforceConnection):
         key, value = self.external_id.field, self.external_id.value
         try:
-            return salesforce_connection.sf.__getattr__("self.type").get_by_custom_id(key, value)["Id"]
+            return salesforce_connection.__getattr__("self.type").get_by_custom_id(key, value)["Id"]
         except SalesforceResourceNotFound:
             raise AttributeError(f'record of type {self.type} with {key} having the value "{value}" cannot be found')
 
@@ -70,7 +70,6 @@ class SalesforceObject:
         self.refreshed = False
         self.external_id = SalesforceExternalID(*list(_content[EXTERNAL_ID].items())[0])
         self.sf_connection = salesforce_connection
-        self.sf = salesforce_connection.sf
         self.type = _content[TYPE]
         self.content =  CaseInsensitiveDict({k: v for k, v in content.items()
                                              if k.lower() not in [RELATIONS, EXTERNAL_ID, TYPE]})
@@ -130,4 +129,4 @@ class SalesforceObject:
 
     @property
     def sf_type(self):
-        return self.sf.__getattr__(self.type)
+        return self.sf_connection.__getattr__(self.type)
