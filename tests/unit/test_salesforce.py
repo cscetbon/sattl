@@ -55,11 +55,10 @@ def salesforce_connection():
 
 
 def test_salesforce_connection(salesforce_connection):
-    sf_conn = salesforce_connection
-    assert sf_conn.sf_version == "53.0"
-    assert sf_conn.domain == "test"
-    assert sf_conn.sf_instance == "2u-dom-ain-pastg.my.salesforce.com"
-    assert sf_conn.auth_type == "password"
+    assert salesforce_connection.sf_version == "53.0"
+    assert salesforce_connection.domain == "test"
+    assert salesforce_connection.sf_instance == "2u-dom-ain-pastg.my.salesforce.com"
+    assert salesforce_connection.auth_type == "password"
 
 
 def test_salesforce_external_id():

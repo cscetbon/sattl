@@ -3,6 +3,7 @@ from sattl.config import Config
 from requests.structures import CaseInsensitiveDict
 from typing import Dict
 
+ID = "Id"
 EXTERNAL_ID = "externalid"
 RELATIONS = "relations"
 TYPE = "type"
@@ -45,7 +46,7 @@ class SalesforceRelation:
     def get_id(self, salesforce_connection: SalesforceConnection):
         key, value = self.external_id.field, self.external_id.value
         try:
-            return salesforce_connection.__getattr__("self.type").get_by_custom_id(key, value)["Id"]
+            return salesforce_connection.__getattr__("self.type").get_by_custom_id(key, value)[ID]
         except SalesforceResourceNotFound:
             raise AttributeError(f'record of type {self.type} with {key} having the value "{value}" cannot be found')
 
@@ -94,8 +95,7 @@ class SalesforceObject:
         for sf_object in [self, other]:
             sf_object.refresh_relations()
 
-        other_content = other.content
-        return not any([self.content.get(field) != other_content.get(field) for field in other_content])
+        return not any([self.content.get(field) != other.content.get(field) for field in other.content])
 
     def get(self):
         try:
@@ -111,7 +111,7 @@ class SalesforceObject:
     def delete(self):
         try:
             result = self.sf_type.get_by_custom_id(self.external_id.field, self.external_id.value)
-            self.sf_type.delete(result["Id"])
+            self.sf_type.delete(result[ID])
             return True
         except SalesforceResourceNotFound:
             pass
@@ -120,7 +120,7 @@ class SalesforceObject:
     def upsert(self):
         try:
             self.refresh_relations()
-            self.content.pop("Id", None)
+            self.content.pop(ID, None)
             self.sf_type.upsert(f"{self.external_id.field}/{self.external_id.value}", self.content)
             return True
         except SalesforceResourceNotFound:
