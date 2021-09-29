@@ -27,8 +27,8 @@ def test_step_fail():
          patch.object(TestAssert, "state") as mock_state:
         step.run()
 
-    assert mock_apply.call_count == 1
-    assert mock_state.call_count == 0
+    mock_apply.assert_called_once()
+    mock_state.assert_not_called()
 
     with pytest.raises(Exception) as exc, \
          patch.object(TestManifest, "apply") as mock_apply, \
@@ -36,7 +36,7 @@ def test_step_fail():
         step.run()
 
     assert mock_apply.call_count == 2
-    assert mock_state.call_count == 1
+    mock_state.assert_called_once()
 
     with pytest.raises(Exception) as exc:
         step.run()
@@ -47,4 +47,4 @@ def test_step_fail():
         step.run()
 
     assert mock_apply.call_count == 2
-    assert mock_state.call_count == 1
+    mock_state.assert_called_once()
