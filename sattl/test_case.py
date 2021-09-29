@@ -22,7 +22,7 @@ class TestCase:
             if not os.path.isfile(f) or not len(f) or DELIMITER not in f:
                 continue
             prefix = f.split(DELIMITER)[0]
-            if not len(prefix):
+            if not prefix:
                 logger.warning(f"Prefix of file {f} is empty")
                 continue
             step = self.content.setdefault(prefix, TestStep(prefix))
