@@ -1,6 +1,7 @@
 from simple_salesforce import Salesforce, SalesforceResourceNotFound
 from sattl.config import Config
 from requests.structures import CaseInsensitiveDict
+from typing import Dict
 
 EXTERNAL_ID = "externalid"
 RELATIONS = "relations"
@@ -31,14 +32,15 @@ class SalesforceExternalID:
 
 class SalesforceRelation:
 
-    def __init__(self, content):
+    def __init__(self, content: Dict):
         if not content:
             raise AttributeError("content used to initialize SalesforceRelation can't be empty")
         _content = CaseInsensitiveDict(content)
         if len(_content) != 2 or TYPE not in _content:
-            raise AttributeError("relation must have 2 keys with one being type and the other one and external ID")
-        self.type = _content[TYPE]
-        self.external_id = SalesforceExternalID(*[(k,v) for k,v in _content.items() if k.lower() != TYPE][0])
+            raise AttributeError("relation must have 2 keys with one being type and the other one an external ID")
+        self.type = _content.pop(TYPE)
+        external_id_field = next(iter(_content))
+        self.external_id = SalesforceExternalID(external_id_field, _content[external_id_field])
 
     def get_id(self, salesforce_connection: SalesforceConnection):
         key, value = self.external_id.field, self.external_id.value
@@ -46,11 +48,6 @@ class SalesforceRelation:
             return salesforce_connection.sf.__getattr__("self.type").get_by_custom_id(key, value)["Id"]
         except SalesforceResourceNotFound:
             raise AttributeError(f'record of type {self.type} with {key} having the value "{value}" cannot be found')
-
-
-def _insensitive_content(content: dict):
-    return CaseInsensitiveDict({k: v for k, v in content.items()
-                                if k.lower() not in [RELATIONS, EXTERNAL_ID, TYPE]})
 
 
 class SalesforceObject:
@@ -75,16 +72,18 @@ class SalesforceObject:
         self.sf_connection = salesforce_connection
         self.sf = salesforce_connection.sf
         self.type = _content[TYPE]
-        self.content = _insensitive_content(_content)
+        self.content =  CaseInsensitiveDict({k: v for k, v in content.items()
+                                             if k.lower() not in [RELATIONS, EXTERNAL_ID, TYPE]})
 
     def __eq__(self, other):
         return self.content == other.content
 
     def refresh_relations(self):
-        if not self.refreshed and (relations := self.relations.items()):
-            for field, relation in relations:
-                self.content[field] = relation.get_id(self.sf_connection)
-            self.refreshed = True
+        if self.refreshed or not self.relations:
+            return
+
+        self.content.update({field: relation.get_id(self.sf_connection) for field, relation in self.relations.items()})
+        self.refreshed = True
 
     def matches(self, other):
         """
@@ -96,7 +95,7 @@ class SalesforceObject:
         for sf_object in [self, other]:
             sf_object.refresh_relations()
 
-        other_content = _insensitive_content(other.content)
+        other_content = other.content
         return not any([self.content.get(field) != other_content.get(field) for field in other_content])
 
     def get(self):
