@@ -72,8 +72,8 @@ class SalesforceObject:
         self.external_id = SalesforceExternalID(*list(_content[EXTERNAL_ID].items())[0])
         self.sf_connection = salesforce_connection
         self.type = _content[TYPE]
-        self.content =  CaseInsensitiveDict({k: v for k, v in content.items()
-                                             if k.lower() not in [RELATIONS, EXTERNAL_ID, TYPE]})
+        self.content = CaseInsensitiveDict({k: v for k, v in content.items()
+                                            if k.lower() not in [RELATIONS, EXTERNAL_ID, TYPE]})
 
     def __eq__(self, other):
         return self.content == other.content
