@@ -1,6 +1,11 @@
 from dataclasses import dataclass, field
 from typing import List
 from sattl.logger import logger
+from sattl.config import Config
+from sattl.salesforce import SalesforceConnection, SalesforceObject
+from os import getenv
+import yaml
+from copy import copy
 
 
 @dataclass
@@ -24,10 +29,12 @@ class TestStep:
 
     def run(self):
         logger.info(f"Running step {self.prefix}")
+        config = Config(is_sandbox=getenv("IS_SANDBOX", True), domain=getenv("SF_DOMAIN"))
+        sf_connection = SalesforceConnection(config)
         for manifest in self.manifests:
             TestManifest(manifest).apply()
         if self.assertion:
-            TestAssert(self.assertion).validate()
+            TestAssert(self.assertion, sf_connection).validate()
 
 
 @dataclass
@@ -43,8 +50,21 @@ class TestManifest:
 @dataclass
 class TestAssert:
     filename: str
+    sf_connection: SalesforceConnection
     __test__ = False
+
+    def get_sf_objects(self):
+        with open(self.filename) as fh:
+            return [
+                SalesforceObject(self.sf_connection, content)
+                for content in yaml.load_all(fh, Loader=yaml.FullLoader) if content
+            ]
 
     def validate(self):
         logger.info(f"Assert state {self.filename}")
-        raise Exception(f"{self.__class__.__name__} failed to assert {self.filename}")
+        for sf_object in self.get_sf_objects():
+            current = copy(sf_object)
+            current.get()
+            if not current.matches(sf_object):
+                return False
+        return True

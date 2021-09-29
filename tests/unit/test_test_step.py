@@ -1,5 +1,6 @@
 import pytest
-from mock import patch
+from mock import patch, mock_open, MagicMock
+import yaml
 
 from sattl.test_step import TestStep, TestManifest, TestAssert
 
@@ -63,3 +64,14 @@ def test_step_applied_manifests_and_asserted_states(sample_test_step):
 
     assert mock_apply.call_count == 2
     mock_state.assert_called_once()
+
+
+@pytest.mark.parametrize('success, match_count', [(True, 3), (False, 1)])
+def test_assert_validate(success, match_count):
+    content = yaml.dump_all([*(dict(type="Account", externalID=dict(Slug__c="aaa"), name="bbb"),)*3])
+    with patch("builtins.open", mock_open(read_data=content)):
+        test_assert = TestAssert("00-assert.yaml", sf_connection=MagicMock())
+
+        with patch('sattl.test_step.SalesforceObject.matches', return_value=success) as mock_so_matches:
+            assert test_assert.validate() is success
+            assert mock_so_matches.call_count == match_count

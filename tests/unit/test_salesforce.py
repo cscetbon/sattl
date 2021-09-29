@@ -22,6 +22,13 @@ def salesforce_login(*_):
     """}
 
 
+@pytest.fixture
+def salesforce_connection():
+    config = Config(is_sandbox=True, domain="dom-ain")
+    with HTTMock(salesforce_login):
+        return SalesforceConnection(config)
+
+
 def query_account(*_):
     return OrderedDict([('attributes',
                      OrderedDict([('type', 'Account'),
@@ -45,13 +52,6 @@ def query_record_type(*_):
                                   ('url',
                                    '/services/data/v53.0/sobjects/RecordType/0123t000000FkA9AAK')])),
                     ('Id', '0123t000000FkA9AAK')])
-
-
-@pytest.fixture
-def salesforce_connection():
-    config = Config(is_sandbox=True, domain="dom-ain")
-    with HTTMock(salesforce_login):
-        return SalesforceConnection(config)
 
 
 def test_salesforce_connection(salesforce_connection):
