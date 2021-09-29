@@ -95,7 +95,7 @@ class SalesforceObject:
         for sf_object in [self, other]:
             sf_object.refresh_relations()
 
-        return not any([self.content.get(field) != other.content.get(field) for field in other.content])
+        return other.content.items() <= self.content.items()
 
     def get(self):
         try:
