@@ -1,9 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
 from sattl.logger import logger
-from sattl.config import Config
-from sattl.salesforce import SalesforceConnection, SalesforceObject
-from os import getenv
+from sattl.salesforce import SalesforceConnection, SalesforceObject, get_sf_connection
 import yaml
 from copy import copy
 
@@ -29,8 +27,7 @@ class TestStep:
 
     def run(self):
         logger.info(f"Running step {self.prefix}")
-        config = Config(is_sandbox=getenv("IS_SANDBOX", True), domain=getenv("SF_DOMAIN"))
-        sf_connection = SalesforceConnection(config)
+        sf_connection = get_sf_connection()
         for manifest in self.manifests:
             TestManifest(manifest).apply()
         if self.assertion:
@@ -61,10 +58,9 @@ class TestAssert:
             ]
 
     def validate(self):
-        logger.info(f"Assert state {self.filename}")
+        logger.info(f"Asserting objects in {self.filename}")
         for sf_object in self.get_sf_objects():
             current = copy(sf_object)
             current.get()
             if not current.matches(sf_object):
-                return False
-        return True
+                raise Exception(f"Failed to assert object {sf_object}")

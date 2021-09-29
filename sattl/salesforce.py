@@ -1,3 +1,5 @@
+from os import getenv
+
 from simple_salesforce import Salesforce, SalesforceResourceNotFound
 from sattl.config import Config
 from requests.structures import CaseInsensitiveDict
@@ -56,6 +58,7 @@ class SalesforceObject:
     def __init__(self, salesforce_connection: SalesforceConnection, content: dict):
         if not content:
             raise AttributeError("content can't be empty")
+        self.original_content = content
         _content = CaseInsensitiveDict(content)
         for field in [EXTERNAL_ID, TYPE]:
             if field not in _content:
@@ -69,11 +72,13 @@ class SalesforceObject:
 
         self.relations = {k:SalesforceRelation(v) for k, v in relations.items() if v}
         self.refreshed = False
-        self.external_id = SalesforceExternalID(*list(_content[EXTERNAL_ID].items())[0])
+        self.external_id = SalesforceExternalID(*list(_content.pop(EXTERNAL_ID).items())[0])
         self.sf_connection = salesforce_connection
-        self.type = _content[TYPE]
-        self.content = CaseInsensitiveDict({k: v for k, v in content.items()
-                                            if k.lower() not in [RELATIONS, EXTERNAL_ID, TYPE]})
+        self.type = _content.pop(TYPE)
+        self.content = CaseInsensitiveDict(_content)
+
+    def __repr__(self):
+        return str(self.original_content)
 
     def __eq__(self, other):
         return self.content == other.content
@@ -130,3 +135,8 @@ class SalesforceObject:
     @property
     def sf_type(self):
         return self.sf_connection.__getattr__(self.type)
+
+
+def get_sf_connection():
+    config = Config(is_sandbox=getenv("IS_SANDBOX", True), domain=getenv("SF_DOMAIN"))
+    return SalesforceConnection(config)

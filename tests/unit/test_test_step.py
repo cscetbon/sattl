@@ -33,6 +33,7 @@ def test_step(assertion, manifests):
 
 def test_step_fails_when_apply_fails(sample_test_step):
     with pytest.raises(Exception), \
+         patch('sattl.test_step.get_sf_connection'), \
          patch.object(TestManifest, "apply", side_effect=Exception) as mock_apply, \
          patch.object(TestAssert, "validate") as mock_state:
         sample_test_step.run()
@@ -41,24 +42,26 @@ def test_step_fails_when_apply_fails(sample_test_step):
     mock_state.assert_not_called()
 
 
-def test_step_fails_when_state_fails(sample_test_step):
-    with pytest.raises(Exception) as exc, \
-         patch.object(TestManifest, "apply") as mock_apply, \
-         patch.object(TestAssert, "validate", side_effect=Exception) as mock_state:
+def test_step_fails_when_assert_fails(sample_test_step):
+    with pytest.raises(Exception), \
+         patch('sattl.test_step.get_sf_connection'), \
+         patch('sattl.test_step.TestManifest') as mock_test_manifest, \
+         patch('sattl.test_step.TestAssert') as m:
+        m().validate.side_effect = Exception
         sample_test_step.run()
-
-    assert mock_apply.call_count == 2
-    mock_state.assert_called_once()
+    assert mock_test_manifest().apply.call_count == 2
+    m().validate.assert_called_once()
 
 
 def test_step_fail_as_apply_fails_by_default(sample_test_step):
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(Exception) as exc, patch('sattl.test_step.get_sf_connection'):
         sample_test_step.run()
     assert str(exc.value) == "TestManifest failed to apply 00-pa-account-case.yaml"
 
 
 def test_step_applied_manifests_and_asserted_states(sample_test_step):
-    with patch.object(TestManifest, "apply") as mock_apply, \
+    with patch('sattl.test_step.get_sf_connection'), \
+         patch.object(TestManifest, "apply") as mock_apply, \
          patch.object(TestAssert, "validate") as mock_state:
         sample_test_step.run()
 
@@ -66,12 +69,23 @@ def test_step_applied_manifests_and_asserted_states(sample_test_step):
     mock_state.assert_called_once()
 
 
-@pytest.mark.parametrize('success, match_count', [(True, 3), (False, 1)])
-def test_assert_validate(success, match_count):
-    content = yaml.dump_all([*(dict(type="Account", externalID=dict(Slug__c="aaa"), name="bbb"),)*3])
-    with patch("builtins.open", mock_open(read_data=content)):
+def test_assert_validate_succeeds():
+    content = yaml.dump_all([*(dict(type="Account", externalID=dict(Slug__c="aaa"), name="bbb"),)*5])
+    with patch("builtins.open", mock_open(read_data=content)), \
+         patch('sattl.test_step.SalesforceObject.matches') as mock_so_matches:
         test_assert = TestAssert("00-assert.yaml", sf_connection=MagicMock())
+        test_assert.validate()
+        assert mock_so_matches.call_count == 5
 
-        with patch('sattl.test_step.SalesforceObject.matches', return_value=success) as mock_so_matches:
-            assert test_assert.validate() is success
-            assert mock_so_matches.call_count == match_count
+
+def test_assert_validate_fails():
+    content = yaml.dump_all([*(dict(type="Account", externalID=dict(Slug__c="aaa"), name="bbb"),)*2])
+    with patch("builtins.open", mock_open(read_data=content)), \
+         patch('sattl.test_step.SalesforceObject.matches', return_value=False) as mock_so_matches, \
+         pytest.raises(Exception) as exc:
+        TestAssert("00-assert.yaml", sf_connection=MagicMock()).validate()
+
+    assert mock_so_matches.call_count == 1
+    assert str(exc.value) == ("Failed to assert object "
+                              "{'externalID': {'Slug__c': 'aaa'}, 'name': 'bbb', 'type': 'Account'}")
+
