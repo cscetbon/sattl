@@ -35,10 +35,10 @@ def test_test_case():
 
     assert "00" in test_case.content
     set0 = test_case.content["00"]
-    assert set0._asserts == '00-assert.yaml'
+    assert set0.assertion == '00-assert.yaml'
     assert set0.manifests == ['00-pa-account0-case.yaml', '00-pa-enrollment0-case.yaml']
 
     assert "01" in test_case.content
     set1 = test_case.content["01"]
-    assert set1._asserts == '01-assert.yaml'
+    assert set1.assertion == '01-assert.yaml'
     assert set1.manifests == ['01-pa-enrollment1-case.yaml', '01-pa-enrollment1-case.yaml']

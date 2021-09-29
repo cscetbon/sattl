@@ -32,10 +32,10 @@ class TestCase:
                 logger.warning(f"Prefix of file {filename} is empty")
                 continue
             step = self.content.setdefault(prefix, TestStep(prefix))
-            if "assert" not in filename.lower():
-                step.add_manifest(filename)
+            if "assert" in filename.lower():
+                step.set_assertion(filename)
                 continue
-            step._asserts = filename
+            step.add_manifest(filename)
 
         if not self.content:
             raise AttributeError(f"path {self.path} is empty")
