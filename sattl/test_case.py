@@ -8,6 +8,14 @@ from sattl.test_step import TestStep
 DELIMITER = "-"
 
 
+def _get_files(path):
+    return [
+        filename for filename in sorted(os.listdir(path)) if (
+                filename and DELIMITER in filename and os.path.isfile(filename)
+        )
+    ]
+
+
 class TestCase:
     __test__ = False
 
@@ -18,9 +26,7 @@ class TestCase:
         self.content: Dict[str, TestStep] = OrderedDict()
 
     def setup(self):
-        for filename in sorted(os.listdir(self.path)):
-            if not (filename and DELIMITER in filename and os.path.isfile(filename)):
-                continue
+        for filename in _get_files(self.path):
             prefix = filename.split(DELIMITER)[0]
             if not prefix:
                 logger.warning(f"Prefix of file {filename} is empty")
