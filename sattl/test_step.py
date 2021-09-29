@@ -14,13 +14,13 @@ class TestStep:
         if self.manifests is None:
             self.manifests = []
 
-    def add_manifest(self, f):
-        self.manifests.append(f)
+    def add_manifest(self, filename):
+        self.manifests.append(filename)
 
-    def set_assertion(self, f):
+    def set_assertion(self, filename):
         if self.assertion:
             raise Exception(f"Assertion already set to {self.assertion}. You can't have more than one.")
-        self.assertion = f
+        self.assertion = filename
 
     def run(self):
         logger.info(f"Running step {self.prefix}")
