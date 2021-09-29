@@ -23,4 +23,3 @@ def setup_logging():
     handler.setLevel('INFO')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    # logger.handlers[0].setFormatter(formatter)

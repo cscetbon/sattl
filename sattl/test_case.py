@@ -18,19 +18,22 @@ class TestCase:
         self.content: Dict[str, TestStep] = OrderedDict()
 
     def setup(self):
-        for f in sorted(os.listdir(self.path)):
-            if not os.path.isfile(f) or not len(f) or DELIMITER not in f:
+        for filename in sorted(os.listdir(self.path)):
+            if not (filename and DELIMITER in filename and os.path.isfile(filename)):
                 continue
-            prefix = f.split(DELIMITER)[0]
+            prefix = filename.split(DELIMITER)[0]
             if not prefix:
-                logger.warning(f"Prefix of file {f} is empty")
+                logger.warning(f"Prefix of file {filename} is empty")
                 continue
             step = self.content.setdefault(prefix, TestStep(prefix))
-            if "assert" not in f.lower():
-                step.append(f)
+            if "assert" not in filename.lower():
+                step.add_manifest(filename)
                 continue
-            step._asserts = f
+            step._asserts = filename
+
+        if not self.content:
+            raise AttributeError(f"path {self.path} is empty")
 
     def run(self):
-        for _, step in self.content.items():
+        for step in self.content.values():
             step.run()

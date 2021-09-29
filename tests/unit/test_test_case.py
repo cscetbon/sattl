@@ -9,6 +9,12 @@ def test_test_case_fail():
     assert str(exc.value) == "path /does/not/exists is not readable"
 
 
+def test_test_case_empty_folder():
+    with pytest.raises(AttributeError) as exc, patch('os.access'), patch('os.listdir', return_value=[]):
+        TestCase("/empty/folder").setup()
+    assert str(exc.value) == "path /empty/folder is empty"
+
+
 def test_test_case():
     files = [
         "01-assert.yaml",
