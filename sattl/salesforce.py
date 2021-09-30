@@ -14,10 +14,11 @@ TYPE = "type"
 class SalesforceConnection(Salesforce):
 
     def __init__(self, config: Config):
+        self.config = config
         opts = dict(version="53.0")
         if config.is_sandbox:
             opts["domain"] = "test"
-        super().__init__(username=config.sf_username, password=config.sf_username, security_token="", **opts)
+        super().__init__(username=config.sf_username, password=config.sf_password, security_token="", **opts)
 
 
 class SalesforceExternalID:

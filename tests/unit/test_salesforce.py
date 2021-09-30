@@ -62,6 +62,13 @@ def test_salesforce_connection(salesforce_connection):
     assert salesforce_connection.auth_type == "password"
 
 
+def test_salesforce_connection_instanciate(salesforce_connection):
+    with patch('sattl.salesforce.Salesforce.__init__') as mock_salesforce:
+        SalesforceConnection(salesforce_connection.config)
+    mock_salesforce.assert_called_with(domain='test', password='PASSWORD', security_token='', username='USERNAME',
+                                       version='53.0')
+
+
 def test_salesforce_external_id():
     sf_external_id = SalesforceExternalID("KEY", "VALUE")
     assert sf_external_id.field == "KEY"
