@@ -3,6 +3,7 @@ from mock import patch, mock_open, MagicMock, Mock
 import yaml
 
 from sattl.test_step import TestStep, TestManifest, TestAssert
+from sattl.salesforce import SalesforceObject
 
 
 @pytest.fixture
@@ -69,12 +70,15 @@ def test_step_applied_manifests_and_asserted_states(sample_test_step):
 
 
 def test_assert_validate_succeeds():
-    content = yaml.dump_all([*(dict(type="Account", externalID=dict(Slug__c="aaa"), name="bbb"),)*5])
+    object_content = dict(type="Account", externalID=dict(Slug__c="aaa"), name="bbb")
+    content = yaml.dump_all([*(object_content,)*5])
+    sf_connection = MagicMock()
     with patch("builtins.open", mock_open(read_data=content)), \
          patch('sattl.test_step.SalesforceObject.matches') as mock_so_matches:
-        test_assert = TestAssert("00-assert.yaml", sf_connection=MagicMock())
+        test_assert = TestAssert("00-assert.yaml", sf_connection=sf_connection)
         test_assert.validate()
-        assert mock_so_matches.call_count == 5
+    assert mock_so_matches.call_count == 5
+    mock_so_matches.assert_called_with(SalesforceObject(sf_connection, object_content))
 
 
 def test_assert_validate_fails():
