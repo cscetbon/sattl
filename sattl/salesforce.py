@@ -1,10 +1,12 @@
+from os import getenv
+
 from simple_salesforce import Salesforce, SalesforceResourceNotFound
 from sattl.config import Config
 from requests.structures import CaseInsensitiveDict
 from typing import Dict
 
 ID = "Id"
-EXTERNAL_ID = "externalid"
+EXTERNAL_ID = "externalId"
 RELATIONS = "relations"
 TYPE = "type"
 
@@ -12,10 +14,11 @@ TYPE = "type"
 class SalesforceConnection(Salesforce):
 
     def __init__(self, config: Config):
+        self.config = config
         opts = dict(version="53.0")
         if config.is_sandbox:
             opts["domain"] = "test"
-        super().__init__(username=config.sf_username, password=config.sf_username, security_token="", **opts)
+        super().__init__(username=config.sf_username, password=config.sf_password, security_token="", **opts)
 
 
 class SalesforceExternalID:
@@ -56,6 +59,7 @@ class SalesforceObject:
     def __init__(self, salesforce_connection: SalesforceConnection, content: dict):
         if not content:
             raise AttributeError("content can't be empty")
+        self.original_content = content
         _content = CaseInsensitiveDict(content)
         for field in [EXTERNAL_ID, TYPE]:
             if field not in _content:
@@ -67,34 +71,35 @@ class SalesforceObject:
             if len(relation) != 2 or TYPE not in relation:
                 raise AttributeError("relation must have 2 keys with one being type and the other one and external ID")
 
-        self.relations = {k:SalesforceRelation(v) for k, v in relations.items() if v}
-        self.refreshed = False
-        self.external_id = SalesforceExternalID(*list(_content[EXTERNAL_ID].items())[0])
+        self.relations = {k: SalesforceRelation(v) for k, v in relations.items() if v}
+        self.external_id = SalesforceExternalID(*list(_content.pop(EXTERNAL_ID).items())[0])
         self.sf_connection = salesforce_connection
-        self.type = _content[TYPE]
-        self.content =  CaseInsensitiveDict({k: v for k, v in content.items()
-                                             if k.lower() not in [RELATIONS, EXTERNAL_ID, TYPE]})
+        self.type = _content.pop(TYPE)
+        self.content = CaseInsensitiveDict(_content)
+
+    def __repr__(self):
+        return str(self.original_content)
 
     def __eq__(self, other):
         return self.content == other.content
 
     def refresh_relations(self):
-        if self.refreshed or not self.relations:
+        if not self.relations:
             return
 
         self.content.update({field: relation.get_id(self.sf_connection) for field, relation in self.relations.items()})
-        self.refreshed = True
+        self.relations = {}
 
     def matches(self, other):
         """
         To match other, self needs to have the same type, the same external id and other's content
         must be a subset of its
         """
+        if not self.get():
+            return False
         if self.type != other.type or self.external_id != other.external_id:
             return False
-        for sf_object in [self, other]:
-            sf_object.refresh_relations()
-
+        other.refresh_relations()
         return other.content.items() <= self.content.items()
 
     def get(self):
@@ -102,7 +107,6 @@ class SalesforceObject:
             result = self.sf_type.get_by_custom_id(self.external_id.field, self.external_id.value)
             del result["attributes"]
             self.content = CaseInsensitiveDict(result)
-            self.refreshed = True
             return True
         except SalesforceResourceNotFound:
             pass
@@ -130,3 +134,8 @@ class SalesforceObject:
     @property
     def sf_type(self):
         return self.sf_connection.__getattr__(self.type)
+
+
+def get_sf_connection():
+    config = Config(is_sandbox=getenv("IS_SANDBOX", True), domain=getenv("SF_DOMAIN"))
+    return SalesforceConnection(config)
