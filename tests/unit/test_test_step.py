@@ -94,5 +94,4 @@ def test_assert_validate_fails(sample_object_content):
 
     assert mock_so_matches.call_count == 1
     assert str(exc.value) == ("Failed to assert object "
-                              "{'externalID': {'Slug__c': 'aaa'}, 'name': 'bbb', 'type': 'Account'} "
-                              "because it doesn't match")
+                              "{'externalID': {'Slug__c': 'aaa'}, 'name': 'bbb', 'type': 'Account'}")
