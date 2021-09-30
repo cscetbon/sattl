@@ -61,6 +61,5 @@ class TestAssert:
         logger.info(f"Asserting objects in {self.filename}")
         for sf_object in self.get_sf_objects():
             current = copy(sf_object)
-            current.get()
             if not current.matches(sf_object):
                 raise Exception(f"Failed to assert object {sf_object}")

@@ -95,6 +95,8 @@ class SalesforceObject:
         To match other, self needs to have the same type, the same external id and other's content
         must be a subset of its
         """
+        if not self.refreshed and not self.get():
+            return False
         if self.type != other.type or self.external_id != other.external_id:
             return False
         for sf_object in [self, other]:
