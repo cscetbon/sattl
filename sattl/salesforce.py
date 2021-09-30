@@ -6,7 +6,7 @@ from requests.structures import CaseInsensitiveDict
 from typing import Dict
 
 ID = "Id"
-EXTERNAL_ID = "externalid"
+EXTERNAL_ID = "externalId"
 RELATIONS = "relations"
 TYPE = "type"
 
@@ -70,7 +70,7 @@ class SalesforceObject:
             if len(relation) != 2 or TYPE not in relation:
                 raise AttributeError("relation must have 2 keys with one being type and the other one and external ID")
 
-        self.relations = {k:SalesforceRelation(v) for k, v in relations.items() if v}
+        self.relations = {k: SalesforceRelation(v) for k, v in relations.items() if v}
         self.external_id = SalesforceExternalID(*list(_content.pop(EXTERNAL_ID).items())[0])
         self.sf_connection = salesforce_connection
         self.type = _content.pop(TYPE)
