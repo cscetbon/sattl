@@ -14,6 +14,11 @@ def sample_test_step():
     )
 
 
+@pytest.fixture
+def sample_object_content():
+    return dict(type="Account", externalID=dict(Slug__c="aaa"), name="bbb")
+
+
 def test_step_fails_if_multiple_assertions(sample_test_step):
     with pytest.raises(Exception) as exc:
         sample_test_step.set_assertion("00-other-assert.yaml")
@@ -69,20 +74,19 @@ def test_step_applied_manifests_and_asserted_states(sample_test_step):
     mock_state.assert_called_once()
 
 
-def test_assert_validate_succeeds():
-    object_content = dict(type="Account", externalID=dict(Slug__c="aaa"), name="bbb")
-    content = yaml.dump_all([*(object_content,)*5])
+def test_assert_validate_succeeds(sample_object_content):
+    content = yaml.dump_all([*(sample_object_content,)*5])
     sf_connection = MagicMock()
     with patch("builtins.open", mock_open(read_data=content)), \
          patch('sattl.test_step.SalesforceObject.matches') as mock_so_matches:
         test_assert = TestAssert("00-assert.yaml", sf_connection=sf_connection)
         test_assert.validate()
     assert mock_so_matches.call_count == 5
-    mock_so_matches.assert_called_with(SalesforceObject(sf_connection, object_content))
+    mock_so_matches.assert_called_with(SalesforceObject(sf_connection, sample_object_content))
 
 
-def test_assert_validate_fails():
-    content = yaml.dump_all([*(dict(type="Account", externalID=dict(Slug__c="aaa"), name="bbb"),)*2])
+def test_assert_validate_fails(sample_object_content):
+    content = yaml.dump_all([*(sample_object_content,)*2])
     with patch("builtins.open", mock_open(read_data=content)), \
          patch('sattl.test_step.SalesforceObject.matches', return_value=False) as mock_so_matches, \
          pytest.raises(Exception) as exc:
@@ -90,5 +94,5 @@ def test_assert_validate_fails():
 
     assert mock_so_matches.call_count == 1
     assert str(exc.value) == ("Failed to assert object "
-                              "{'externalID': {'Slug__c': 'aaa'}, 'name': 'bbb', 'type': 'Account'}")
-
+                              "{'externalID': {'Slug__c': 'aaa'}, 'name': 'bbb', 'type': 'Account'} "
+                              "because it doesn't match")

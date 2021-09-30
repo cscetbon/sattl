@@ -62,4 +62,4 @@ class TestAssert:
         for sf_object in self.get_sf_objects():
             current = copy(sf_object)
             if not current.matches(sf_object):
-                raise Exception(f"Failed to assert object {sf_object}")
+                raise Exception(f"Failed to assert object {sf_object} because it doesn't match")
