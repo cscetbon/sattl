@@ -51,7 +51,8 @@ def query_record_type(*_):
                      OrderedDict([('type', 'RecordType'),
                                   ('url',
                                    '/services/data/v53.0/sobjects/RecordType/0123t000000FkA9AAK')])),
-                    ('Id', '0123t000000FkA9AAK')])
+                    ('Id', '0123t000000FkA9AAK'),
+                    ('Slug__c', 'XC-2')])
 
 
 def test_salesforce_connection(salesforce_connection):
@@ -99,12 +100,9 @@ def test_salesforce_object():
 def test_salesforce_refresh_relations(salesforce_connection):
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     sf_object.refresh_relations()
-    assert sf_object.refreshed is False
-
     relation_mock = Mock()
     sf_object.relations = {"field": relation_mock}
     sf_object.refresh_relations()
-    assert sf_object.refreshed is True
     assert sf_object.content["field"] == relation_mock.get_id(sf_object.sf_connection)
 
 
@@ -112,7 +110,6 @@ def test_salesforce_get(salesforce_connection):
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
         assert sf_object.get() is True
-        assert sf_object.refreshed is True
     assert sf_object.content == {
         'Id': '0017A00000kkHm8QAE',
         'Name': 'Mug Coffee',
@@ -127,7 +124,8 @@ def test_salesforce_get(salesforce_connection):
     }
 
 
-def test_salesforce_matches(salesforce_connection):
+@pytest.mark.parametrize('match,first_name', [(True, "Mug"), (False, "joe")])
+def test_salesforce_matches(match, first_name, salesforce_connection):
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
         assert sf_object.get() is True
@@ -139,17 +137,14 @@ def test_salesforce_matches(salesforce_connection):
           RecordTypeId:
             type: RecordType
             name: SIS Student
-        SIS_First_Name__c: Mug
         SIS_Last_Name__c: Coffee
         University_Email__c: jdoe@test.com
     """
     content = CaseInsensitiveDict(yaml.load(content, Loader=yaml.FullLoader))
     local_sf_object = SalesforceObject(salesforce_connection, content)
-    with patch("simple_salesforce.api.SFType.get_by_custom_id", query_record_type):
-        assert sf_object.matches(local_sf_object) is True
-
-    local_sf_object.content["SIS_First_Name__c"] = "joe"
-    assert sf_object.matches(local_sf_object) is False
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=[query_account(), query_record_type()]):
+        local_sf_object.content["SIS_First_Name__c"] = first_name
+        assert sf_object.matches(local_sf_object) is match
 
 
 def test_salesforce_delete(salesforce_connection):
@@ -189,7 +184,6 @@ def test_salesforce_upsert(salesforce_connection):
         'University_Email__c': 'jdoe@test.com',
         'RecordTypeId': '0123t000000FkA9AAK'
     }
-    assert sf_object.refreshed is True
 
     with patch("simple_salesforce.api.SFType.upsert", side_effect=SF_EXCEPTION_RESOURCE_NOT_FOUND):
         assert sf_object.upsert() is False

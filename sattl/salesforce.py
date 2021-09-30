@@ -71,7 +71,6 @@ class SalesforceObject:
                 raise AttributeError("relation must have 2 keys with one being type and the other one and external ID")
 
         self.relations = {k:SalesforceRelation(v) for k, v in relations.items() if v}
-        self.refreshed = False
         self.external_id = SalesforceExternalID(*list(_content.pop(EXTERNAL_ID).items())[0])
         self.sf_connection = salesforce_connection
         self.type = _content.pop(TYPE)
@@ -84,24 +83,22 @@ class SalesforceObject:
         return self.content == other.content
 
     def refresh_relations(self):
-        if self.refreshed or not self.relations:
+        if not self.relations:
             return
 
         self.content.update({field: relation.get_id(self.sf_connection) for field, relation in self.relations.items()})
-        self.refreshed = True
+        self.relations = {}
 
     def matches(self, other):
         """
         To match other, self needs to have the same type, the same external id and other's content
         must be a subset of its
         """
-        if not self.refreshed and not self.get():
+        if not self.get():
             return False
         if self.type != other.type or self.external_id != other.external_id:
             return False
-        for sf_object in [self, other]:
-            sf_object.refresh_relations()
-
+        other.refresh_relations()
         return other.content.items() <= self.content.items()
 
     def get(self):
@@ -109,7 +106,6 @@ class SalesforceObject:
             result = self.sf_type.get_by_custom_id(self.external_id.field, self.external_id.value)
             del result["attributes"]
             self.content = CaseInsensitiveDict(result)
-            self.refreshed = True
             return True
         except SalesforceResourceNotFound:
             pass
