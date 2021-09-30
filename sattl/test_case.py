@@ -2,6 +2,7 @@ import os
 from typing import Dict
 from collections import OrderedDict
 from sattl.logger import logger
+from sattl.salesforce import get_sf_connection
 from sattl.test_step import TestStep
 
 
@@ -31,7 +32,7 @@ class TestCase:
             if not prefix:
                 logger.warning(f"Prefix of file {filename} is empty")
                 continue
-            step = self.content.setdefault(prefix, TestStep(prefix))
+            step = self.content.setdefault(prefix, TestStep(prefix, sf_connection=get_sf_connection()))
             if "assert" in filename.lower():
                 step.set_assertion(filename)
                 continue

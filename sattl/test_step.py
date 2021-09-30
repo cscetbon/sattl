@@ -9,6 +9,7 @@ from copy import copy
 @dataclass
 class TestStep:
     prefix: str
+    sf_connection: SalesforceConnection = None
     assertion: str = None
     manifests: List = field(default_factory=list)
     __test__ = False
@@ -27,11 +28,10 @@ class TestStep:
 
     def run(self):
         logger.info(f"Running step {self.prefix}")
-        sf_connection = get_sf_connection()
         for manifest in self.manifests:
             TestManifest(manifest).apply()
         if self.assertion:
-            TestAssert(self.assertion, sf_connection).validate()
+            TestAssert(self.assertion, self.sf_connection).validate()
 
 
 @dataclass

@@ -1,5 +1,5 @@
 import pytest
-from mock import patch, mock_open, MagicMock
+from mock import patch, mock_open, MagicMock, Mock
 import yaml
 
 from sattl.test_step import TestStep, TestManifest, TestAssert
@@ -8,7 +8,8 @@ from sattl.test_step import TestStep, TestManifest, TestAssert
 @pytest.fixture
 def sample_test_step():
     return TestStep(
-        prefix="00", manifests=["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"], assertion="00-assert.yaml"
+        prefix="00", manifests=["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"], assertion="00-assert.yaml",
+        sf_connection=Mock(),
     )
 
 
@@ -33,7 +34,6 @@ def test_step(assertion, manifests):
 
 def test_step_fails_when_apply_fails(sample_test_step):
     with pytest.raises(Exception), \
-         patch('sattl.test_step.get_sf_connection'), \
          patch.object(TestManifest, "apply", side_effect=Exception) as mock_apply, \
          patch.object(TestAssert, "validate") as mock_state:
         sample_test_step.run()
@@ -44,7 +44,6 @@ def test_step_fails_when_apply_fails(sample_test_step):
 
 def test_step_fails_when_assert_fails(sample_test_step):
     with pytest.raises(Exception), \
-         patch('sattl.test_step.get_sf_connection'), \
          patch('sattl.test_step.TestManifest') as mock_test_manifest, \
          patch('sattl.test_step.TestAssert') as m:
         m().validate.side_effect = Exception

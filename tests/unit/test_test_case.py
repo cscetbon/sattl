@@ -27,7 +27,8 @@ def test_test_case():
     ]
     with patch('os.access'), \
          patch('os.listdir', return_value=files), \
-         patch('os.path.isfile', lambda f: f != "folder"):
+         patch('os.path.isfile', lambda f: f != "folder"), \
+         patch('sattl.test_case.get_sf_connection'):
         test_case = TestCase("/does/exists")
         test_case.setup()
     assert test_case.path == "/does/exists"
