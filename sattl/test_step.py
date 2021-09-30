@@ -60,6 +60,7 @@ class TestAssert:
     def validate(self):
         logger.info(f"Asserting objects in {self.filename}")
         for sf_object in self.get_sf_objects():
+            sf_object.refresh_relations()
             current = copy(sf_object)
-            if not current.matches(sf_object):
+            if not (current.load() and current.matches(sf_object)):
                 raise Exception(f"Failed to assert object {sf_object}")
