@@ -34,7 +34,7 @@ class TestStep:
             TestAssert(self.assertion, self.sf_connection).validate()
 
 
-def get_sf_objects(sf_connection, filename):
+def _get_sf_objects(sf_connection, filename):
     with open(filename) as fh:
         return [
             SalesforceObject(sf_connection, content)
@@ -50,7 +50,7 @@ class TestManifest:
 
     def apply(self):
         logger.info(f"Applying manifest {self.filename}")
-        for sf_object in get_sf_objects(self.sf_connection, self.filename):
+        for sf_object in _get_sf_objects(self.sf_connection, self.filename):
             sf_object.refresh_relations()
             if not sf_object.upsert():
                 raise Exception(f"Failed to apply object {sf_object}")
@@ -64,7 +64,7 @@ class TestAssert:
 
     def validate(self):
         logger.info(f"Asserting objects in {self.filename}")
-        for sf_object in get_sf_objects(self.sf_connection, self.filename):
+        for sf_object in _get_sf_objects(self.sf_connection, self.filename):
             sf_object.refresh_relations()
             current = copy(sf_object)
             if not (current.load() and current.matches(sf_object)):

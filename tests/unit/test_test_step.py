@@ -101,3 +101,13 @@ def test_manifest_apply_succeeds(yaml_content_of_sf_objects, sample_object_conte
         test_manifest = TestManifest("00-new-account.yaml", sf_connection=MagicMock())
         test_manifest.apply()
     assert mock_so_upsert.call_count == 5
+
+def test_manifest_apply_fails(yaml_content_of_sf_objects, sample_object_content):
+    with patch("builtins.open", mock_open(read_data=yaml_content_of_sf_objects)), \
+         patch('sattl.test_step.SalesforceObject.upsert', return_value=False) as mock_so_upsert, \
+         pytest.raises(Exception) as exc:
+        test_manifest = TestManifest("00-new-account.yaml", sf_connection=MagicMock())
+        test_manifest.apply()
+    assert mock_so_upsert.call_count == 1
+    assert str(exc.value) == ("Failed to apply object "
+                              "{'externalID': {'Slug__c': 'aaa'}, 'name': 'bbb', 'type': 'Account'}")
