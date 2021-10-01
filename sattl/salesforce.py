@@ -120,7 +120,6 @@ class SalesforceObject:
 
     def upsert(self):
         try:
-            self.refresh_relations()
             self.content.pop(ID, None)
             self.sf_type.upsert(f"{self.external_id.field}/{self.external_id.value}", self.content)
             return True

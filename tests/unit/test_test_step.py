@@ -58,12 +58,6 @@ def test_step_fails_when_assert_fails(sample_test_step):
     mock_test_assert().validate.assert_called_once()
 
 
-def test_step_fail_as_apply_fails_by_default(sample_test_step):
-    with pytest.raises(Exception) as exc, patch('sattl.test_step.get_sf_connection'):
-        sample_test_step.run()
-    assert str(exc.value) == "TestManifest failed to apply 00-pa-account-case.yaml"
-
-
 def test_step_applied_manifests_and_asserted_states(sample_test_step):
     with patch('sattl.test_step.get_sf_connection'), \
          patch.object(TestManifest, "apply") as mock_apply, \

@@ -29,19 +29,31 @@ class TestStep:
     def run(self):
         logger.info(f"Running step {self.prefix}")
         for manifest in self.manifests:
-            TestManifest(manifest).apply()
+            TestManifest(manifest, self.sf_connection).apply()
         if self.assertion:
             TestAssert(self.assertion, self.sf_connection).validate()
+
+
+def get_sf_objects(sf_connection, filename):
+    with open(filename) as fh:
+        return [
+            SalesforceObject(sf_connection, content)
+            for content in yaml.load_all(fh, Loader=yaml.FullLoader) if content
+        ]
 
 
 @dataclass
 class TestManifest:
     filename: str
+    sf_connection: SalesforceConnection
     __test__ = False
 
     def apply(self):
-        logger.info(f"Applies manifest {self.filename}")
-        raise Exception(f"{self.__class__.__name__} failed to apply {self.filename}")
+        logger.info(f"Applying manifest {self.filename}")
+        for sf_object in get_sf_objects(self.sf_connection, self.filename):
+            sf_object.refresh_relations()
+            if not sf_object.upsert():
+                raise Exception(f"Failed to apply object {sf_object}")
 
 
 @dataclass
@@ -50,16 +62,9 @@ class TestAssert:
     sf_connection: SalesforceConnection
     __test__ = False
 
-    def get_sf_objects(self):
-        with open(self.filename) as fh:
-            return [
-                SalesforceObject(self.sf_connection, content)
-                for content in yaml.load_all(fh, Loader=yaml.FullLoader) if content
-            ]
-
     def validate(self):
         logger.info(f"Asserting objects in {self.filename}")
-        for sf_object in self.get_sf_objects():
+        for sf_object in get_sf_objects(self.sf_connection, self.filename):
             sf_object.refresh_relations()
             current = copy(sf_object)
             if not (current.load() and current.matches(sf_object)):
