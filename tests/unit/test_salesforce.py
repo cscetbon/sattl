@@ -113,10 +113,10 @@ def test_salesforce_refresh_relations(salesforce_connection):
     assert sf_object.content["field"] == relation_mock.get_id(sf_object.sf_connection)
 
 
-def test_salesforce_get(salesforce_connection):
+def test_salesforce_load(salesforce_connection):
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
-        assert sf_object.get() is True
+        assert sf_object.load() is True
     assert sf_object.content == {
         'Id': '0017A00000kkHm8QAE',
         'Name': 'Mug Coffee',
@@ -135,7 +135,7 @@ def test_salesforce_get(salesforce_connection):
 def test_salesforce_matches(match, first_name, salesforce_connection):
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
-        assert sf_object.get() is True
+        assert sf_object.load() is True
     content = """
         type: Account
         externalID:

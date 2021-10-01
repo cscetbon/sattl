@@ -95,14 +95,11 @@ class SalesforceObject:
         To match other, self needs to have the same type, the same external id and other's content
         must be a subset of its
         """
-        if not self.get():
-            return False
         if self.type != other.type or self.external_id != other.external_id:
             return False
-        other.refresh_relations()
         return other.content.items() <= self.content.items()
 
-    def get(self):
+    def load(self):
         try:
             result = self.sf_type.get_by_custom_id(self.external_id.field, self.external_id.value)
             del result["attributes"]
