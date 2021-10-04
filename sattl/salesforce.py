@@ -121,7 +121,7 @@ class SalesforceObject:
     def upsert(self):
         try:
             self.content.pop(ID, None)
-            self.sf_type.upsert(f"{self.external_id.field}/{self.external_id.value}", self.content)
+            self.sf_type.upsert(f"{self.external_id.field}/{self.external_id.value}", dict(self.content))
             return True
         except SalesforceResourceNotFound:
             pass
