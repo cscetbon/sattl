@@ -35,14 +35,6 @@ class TestStep:
             TestAssert(self.assertion, self.sf_connection).validate()
 
 
-def _get_sf_objects(sf_connection, filename):
-    with open(filename) as fh:
-        return [
-            SalesforceObject(sf_connection, content)
-            for content in yaml.load_all(fh, Loader=yaml.FullLoader) if content
-        ]
-
-
 @dataclass
 class TestElement:
     filename: str
@@ -53,12 +45,19 @@ class TestElement:
     def validate(self):
         pass
 
+    def get_sf_objects(self):
+        with open(self.filename) as fh:
+            return [
+                SalesforceObject(self.sf_connection, content)
+                for content in yaml.load_all(fh, Loader=yaml.FullLoader) if content
+            ]
+
 
 class TestManifest(TestElement):
 
     def validate(self):
         logger.info(f"Applying manifest {self.filename}")
-        for sf_object in _get_sf_objects(self.sf_connection, self.filename):
+        for sf_object in self.get_sf_objects():
             sf_object.refresh_relations()
             if not sf_object.upsert():
                 raise Exception(f"Failed to apply object {sf_object}")
@@ -68,7 +67,7 @@ class TestAssert(TestElement):
 
     def validate(self):
         logger.info(f"Asserting objects in {self.filename}")
-        for sf_object in _get_sf_objects(self.sf_connection, self.filename):
+        for sf_object in self.get_sf_objects():
             sf_object.refresh_relations()
             current = copy(sf_object)
             if not (current.load() and current.matches(sf_object)):
