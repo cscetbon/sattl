@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import List
 from sattl.logger import logger
@@ -29,7 +30,7 @@ class TestStep:
     def run(self):
         logger.info(f"Running step {self.prefix}")
         for manifest in self.manifests:
-            TestManifest(manifest, self.sf_connection).apply()
+            TestManifest(manifest, self.sf_connection).validate()
         if self.assertion:
             TestAssert(self.assertion, self.sf_connection).validate()
 
@@ -43,12 +44,19 @@ def _get_sf_objects(sf_connection, filename):
 
 
 @dataclass
-class TestManifest:
+class TestElement:
     filename: str
     sf_connection: SalesforceConnection
     __test__ = False
 
-    def apply(self):
+    @abstractmethod
+    def validate(self):
+        pass
+
+
+class TestManifest(TestElement):
+
+    def validate(self):
         logger.info(f"Applying manifest {self.filename}")
         for sf_object in _get_sf_objects(self.sf_connection, self.filename):
             sf_object.refresh_relations()
@@ -56,11 +64,7 @@ class TestManifest:
                 raise Exception(f"Failed to apply object {sf_object}")
 
 
-@dataclass
-class TestAssert:
-    filename: str
-    sf_connection: SalesforceConnection
-    __test__ = False
+class TestAssert(TestElement):
 
     def validate(self):
         logger.info(f"Asserting objects in {self.filename}")
