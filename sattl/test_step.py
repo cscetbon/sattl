@@ -35,7 +35,7 @@ class TestStep:
 
 
 @dataclass
-class TestElement:
+class TestStepElement:
     filename: str
     sf_connection: SalesforceConnection
     __test__ = False
@@ -48,7 +48,7 @@ class TestElement:
             ]
 
 
-class TestManifest(TestElement):
+class TestManifest(TestStepElement):
 
     def apply(self):
         logger.info(f"Applying manifest {self.filename}")
@@ -58,7 +58,7 @@ class TestManifest(TestElement):
                 raise Exception(f"Failed to upsert object {sf_object}")
 
 
-class TestAssert(TestElement):
+class TestAssert(TestStepElement):
 
     def validate(self):
         logger.info(f"Asserting objects in {self.filename}")

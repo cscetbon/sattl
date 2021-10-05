@@ -64,8 +64,7 @@ def test_step_fails_when_assert_fails(sample_test_step):
 
 
 def test_step_manifests_and_asserts(sample_test_step):
-    with patch('sattl.test_step.get_sf_connection'), \
-         patch.object(TestManifest, "apply") as mock_apply, \
+    with patch.object(TestManifest, "apply") as mock_apply, \
          patch.object(TestAssert, "validate") as mock_validate:
         sample_test_step.run()
 
