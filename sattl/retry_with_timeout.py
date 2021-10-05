@@ -1,5 +1,4 @@
 import signal
-from sattl.test_step import TestStepElement
 
 
 class TimeoutException(Exception):
