@@ -1,8 +1,7 @@
-from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import List
 from sattl.logger import logger
-from sattl.salesforce import SalesforceConnection, SalesforceObject, get_sf_connection
+from sattl.salesforce import SalesforceConnection, SalesforceObject
 import yaml
 from copy import copy
 
@@ -30,7 +29,7 @@ class TestStep:
     def run(self):
         logger.info(f"Running step {self.prefix}")
         for manifest in self.manifests:
-            TestManifest(manifest, self.sf_connection).validate()
+            TestManifest(manifest, self.sf_connection).apply()
         if self.assertion:
             TestAssert(self.assertion, self.sf_connection).validate()
 
@@ -40,10 +39,6 @@ class TestElement:
     filename: str
     sf_connection: SalesforceConnection
     __test__ = False
-
-    @abstractmethod
-    def validate(self):
-        pass
 
     def get_sf_objects(self):
         with open(self.filename) as fh:
@@ -55,12 +50,12 @@ class TestElement:
 
 class TestManifest(TestElement):
 
-    def validate(self):
+    def apply(self):
         logger.info(f"Applying manifest {self.filename}")
         for sf_object in self.get_sf_objects():
             sf_object.refresh_relations()
             if not sf_object.upsert():
-                raise Exception(f"Failed to apply object {sf_object}")
+                raise Exception(f"Failed to upsert object {sf_object}")
 
 
 class TestAssert(TestElement):
