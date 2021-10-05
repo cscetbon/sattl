@@ -20,10 +20,11 @@ def _get_files(path):
 class TestCase:
     __test__ = False
 
-    def __init__(self, path):
+    def __init__(self, path, timeout=30):
         if not os.access(path, os.R_OK):
             raise AttributeError(f"path {path} is not readable")
         self.path = path
+        self.timeout = timeout
         self.content: Dict[str, TestStep] = OrderedDict()
 
     def setup(self):
@@ -43,4 +44,4 @@ class TestCase:
 
     def run(self):
         for step in self.content.values():
-            step.run()
+            step.run(self.timeout)

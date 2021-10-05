@@ -27,12 +27,12 @@ class TestStep:
             raise Exception(f"Assertion already set to {self.assertion}. You can't have more than one.")
         self.assertion = filename
 
-    def run(self):
+    def run(self, timeout):
         logger.info(f"Running step {self.prefix}")
         for manifest in self.manifests:
-            RetryWithTimeout(TestManifest(manifest, self.sf_connection).apply, seconds=1)
+            TestManifest(manifest, self.sf_connection).apply()
         if self.assertion:
-            RetryWithTimeout(TestAssert(self.assertion, self.sf_connection).validate, seconds=1)
+            RetryWithTimeout(TestAssert(self.assertion, self.sf_connection).validate, seconds=timeout)
 
 
 @dataclass

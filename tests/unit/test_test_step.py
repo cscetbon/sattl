@@ -53,7 +53,7 @@ def test_step_fails_when_apply_fails(sample_test_step):
          patch('sattl.test_step.RetryWithTimeout', CallFunctionPassed), \
          patch.object(TestManifest, "apply", side_effect=Exception) as mock_apply, \
          patch.object(TestAssert, "validate") as mock_validate:
-        sample_test_step.run()
+        sample_test_step.run(timeout=10)
 
     mock_apply.assert_called_once()
     mock_validate.assert_not_called()
@@ -65,7 +65,7 @@ def test_step_fails_when_assert_fails(sample_test_step):
          patch('sattl.test_step.TestManifest') as mock_test_manifest, \
          patch('sattl.test_step.TestAssert') as mock_test_assert:
         mock_test_assert().validate.side_effect = Exception
-        sample_test_step.run()
+        sample_test_step.run(timeout=10)
     assert mock_test_manifest().apply.call_count == 2
     mock_test_assert().validate.assert_called_once()
 
@@ -73,7 +73,7 @@ def test_step_fails_when_assert_fails(sample_test_step):
 def test_step_manifests_and_asserts(sample_test_step):
     with patch.object(TestManifest, "apply") as mock_apply, \
          patch.object(TestAssert, "validate") as mock_validate:
-        sample_test_step.run()
+        sample_test_step.run(timeout=10)
 
     assert mock_apply.call_count == 2
     mock_validate.assert_called_once()
