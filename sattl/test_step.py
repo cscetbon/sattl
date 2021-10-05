@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
 from sattl.logger import logger
-from sattl.salesforce import SalesforceConnection, SalesforceObject, get_sf_connection
+from sattl.salesforce import SalesforceConnection, SalesforceObject
 import yaml
 from copy import copy
 
@@ -29,23 +29,13 @@ class TestStep:
     def run(self):
         logger.info(f"Running step {self.prefix}")
         for manifest in self.manifests:
-            TestManifest(manifest).apply()
+            TestManifest(manifest, self.sf_connection).apply()
         if self.assertion:
             TestAssert(self.assertion, self.sf_connection).validate()
 
 
 @dataclass
-class TestManifest:
-    filename: str
-    __test__ = False
-
-    def apply(self):
-        logger.info(f"Applies manifest {self.filename}")
-        raise Exception(f"{self.__class__.__name__} failed to apply {self.filename}")
-
-
-@dataclass
-class TestAssert:
+class TestStepElement:
     filename: str
     sf_connection: SalesforceConnection
     __test__ = False
@@ -56,6 +46,19 @@ class TestAssert:
                 SalesforceObject(self.sf_connection, content)
                 for content in yaml.load_all(fh, Loader=yaml.FullLoader) if content
             ]
+
+
+class TestManifest(TestStepElement):
+
+    def apply(self):
+        logger.info(f"Applying manifest {self.filename}")
+        for sf_object in self.get_sf_objects():
+            sf_object.refresh_relations()
+            if not sf_object.upsert():
+                raise Exception(f"Failed to upsert object {sf_object}")
+
+
+class TestAssert(TestStepElement):
 
     def validate(self):
         logger.info(f"Asserting objects in {self.filename}")

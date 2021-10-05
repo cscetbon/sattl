@@ -188,8 +188,7 @@ def test_salesforce_upsert(salesforce_connection):
     assert sf_object.content == {
         'SIS_First_Name__c': 'Mug',
         'SIS_Last_Name__c': 'Coffee',
-        'University_Email__c': 'jdoe@test.com',
-        'RecordTypeId': '0123t000000FkA9AAK'
+        'University_Email__c': 'jdoe@test.com'
     }
 
     with patch("simple_salesforce.api.SFType.upsert", side_effect=SF_EXCEPTION_RESOURCE_NOT_FOUND):

@@ -49,7 +49,7 @@ class SalesforceRelation:
     def get_id(self, salesforce_connection: SalesforceConnection):
         key, value = self.external_id.field, self.external_id.value
         try:
-            return salesforce_connection.__getattr__("self.type").get_by_custom_id(key, value)[ID]
+            return salesforce_connection.__getattr__(self.type).get_by_custom_id(key, value)[ID]
         except SalesforceResourceNotFound:
             raise AttributeError(f'record of type {self.type} with {key} having the value "{value}" cannot be found')
 
@@ -120,9 +120,8 @@ class SalesforceObject:
 
     def upsert(self):
         try:
-            self.refresh_relations()
             self.content.pop(ID, None)
-            self.sf_type.upsert(f"{self.external_id.field}/{self.external_id.value}", self.content)
+            self.sf_type.upsert(f"{self.external_id.field}/{self.external_id.value}", dict(self.content))
             return True
         except SalesforceResourceNotFound:
             pass
