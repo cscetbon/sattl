@@ -9,8 +9,8 @@ from sattl.salesforce import SalesforceObject
 @pytest.fixture
 def sample_test_step():
     return TestStep(
-        prefix="00", manifests=["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"], assertion="00-assert.yaml",
-        sf_connection=Mock(),
+        prefix="00", assert_timeout=10, manifests=["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"],
+        assertion="00-assert.yaml", sf_connection=Mock(),
     )
 
 
@@ -35,7 +35,7 @@ def test_step_fails_if_multiple_assertions(sample_test_step):
     (None, ["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"]),
 ])
 def test_step(assertion, manifests):
-    step = TestStep(prefix="00", manifests=None, assertion=assertion)
+    step = TestStep(prefix="00", assert_timeout=10, manifests=None, assertion=assertion)
     assert step.manifests == []
     assert step.assertion == assertion
     for manifest in manifests:
@@ -53,7 +53,7 @@ def test_step_fails_when_apply_fails(sample_test_step):
          patch('sattl.test_step.RetryWithTimeout', CallFunctionPassed), \
          patch.object(TestManifest, "apply", side_effect=Exception) as mock_apply, \
          patch.object(TestAssert, "validate") as mock_validate:
-        sample_test_step.run(timeout=10)
+        sample_test_step.run()
 
     mock_apply.assert_called_once()
     mock_validate.assert_not_called()
@@ -65,7 +65,7 @@ def test_step_fails_when_assert_fails(sample_test_step):
          patch('sattl.test_step.TestManifest') as mock_test_manifest, \
          patch('sattl.test_step.TestAssert') as mock_test_assert:
         mock_test_assert().validate.side_effect = Exception
-        sample_test_step.run(timeout=10)
+        sample_test_step.run()
     assert mock_test_manifest().apply.call_count == 2
     mock_test_assert().validate.assert_called_once()
 
@@ -73,7 +73,7 @@ def test_step_fails_when_assert_fails(sample_test_step):
 def test_step_manifests_and_asserts(sample_test_step):
     with patch.object(TestManifest, "apply") as mock_apply, \
          patch.object(TestAssert, "validate") as mock_validate:
-        sample_test_step.run(timeout=10)
+        sample_test_step.run()
 
     assert mock_apply.call_count == 2
     mock_validate.assert_called_once()

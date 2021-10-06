@@ -33,7 +33,8 @@ class TestCase:
             if not prefix:
                 logger.warning(f"Prefix of file {filename} is empty")
                 continue
-            step = self.content.setdefault(prefix, TestStep(prefix, sf_connection=get_sf_connection()))
+            step = self.content.setdefault(prefix, TestStep(prefix, assert_timeout=self.timeout,
+                                                            sf_connection=get_sf_connection()))
             if "assert" in filename.lower():
                 step.set_assertion(filename)
                 continue
@@ -44,4 +45,4 @@ class TestCase:
 
     def run(self):
         for step in self.content.values():
-            step.run(self.timeout)
+            step.run()

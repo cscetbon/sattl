@@ -10,6 +10,7 @@ from copy import copy
 @dataclass
 class TestStep:
     prefix: str
+    assert_timeout: int
     sf_connection: SalesforceConnection = None
     assertion: str = None
     manifests: List = field(default_factory=list)
@@ -27,12 +28,12 @@ class TestStep:
             raise Exception(f"Assertion already set to {self.assertion}. You can't have more than one.")
         self.assertion = filename
 
-    def run(self, timeout):
+    def run(self):
         logger.info(f"Running step {self.prefix}")
         for manifest in self.manifests:
             TestManifest(manifest, self.sf_connection).apply()
         if self.assertion:
-            RetryWithTimeout(TestAssert(self.assertion, self.sf_connection).validate, seconds=timeout)
+            RetryWithTimeout(TestAssert(self.assertion, self.sf_connection).validate, seconds=self.assert_timeout)
 
 
 @dataclass
