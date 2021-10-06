@@ -24,16 +24,16 @@ class TestStep:
     def add_manifest(self, filename):
         self.manifests.append(filename)
 
-    def set_attribute(self, name, value):
+    def _set_attribute(self, name, value):
         if current_value := self.__getattribute__(name):
             raise Exception(f"{name.title()} already set to {current_value}. You can't have more than one.")
         self.__setattr__(name, value)
 
     def set_assertion(self, filename):
-        self.set_attribute("assertion", filename)
+        self._set_attribute("assertion", filename)
 
     def set_delete(self, filename):
-        self.set_attribute("delete", filename)
+        self._set_attribute("delete", filename)
 
     def run(self):
         logger.info(f"Running step {self.prefix}")
@@ -41,6 +41,8 @@ class TestStep:
             TestManifest(manifest, self.sf_connection).apply()
         if self.assertion:
             RetryWithTimeout(TestAssert(self.assertion, self.sf_connection).validate, seconds=self.assert_timeout)
+        if self.delete:
+            TestDelete(self.delete, self.sf_connection).apply()
 
 
 @dataclass
