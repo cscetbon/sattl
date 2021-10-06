@@ -13,6 +13,7 @@ class TestStep:
     assert_timeout: int
     sf_connection: SalesforceConnection = None
     assertion: str = None
+    delete: str = None
     manifests: List = field(default_factory=list)
     __test__ = False
 
@@ -23,10 +24,16 @@ class TestStep:
     def add_manifest(self, filename):
         self.manifests.append(filename)
 
+    def set_attribute(self, name, value):
+        if current_value := self.__getattribute__(name):
+            raise Exception(f"{name.title()} already set to {current_value}. You can't have more than one.")
+        self.__setattr__(name, value)
+
     def set_assertion(self, filename):
-        if self.assertion:
-            raise Exception(f"Assertion already set to {self.assertion}. You can't have more than one.")
-        self.assertion = filename
+        self.set_attribute("assertion", filename)
+
+    def set_delete(self, filename):
+        self.set_attribute("delete", filename)
 
     def run(self):
         logger.info(f"Running step {self.prefix}")
@@ -69,3 +76,11 @@ class TestAssert(TestStepElement):
             current = copy(sf_object)
             if not (current.load() and current.matches(sf_object)):
                 raise Exception(f"Failed to assert object {sf_object}")
+
+
+class TestDelete(TestStepElement):
+
+    def apply(self):
+        logger.info(f"Delete objects in {self.filename}")
+        for sf_object in self.get_sf_objects():
+            sf_object.delete()

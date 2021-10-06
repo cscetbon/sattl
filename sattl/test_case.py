@@ -38,6 +38,11 @@ class TestCase:
             if "assert" in filename.lower():
                 step.set_assertion(filename)
                 continue
+
+            if "delete" in filename.lower():
+                step.set_delete(filename)
+                continue
+
             step.add_manifest(filename)
 
         if not self.content:
