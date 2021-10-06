@@ -35,11 +35,11 @@ class TestCase:
                 continue
             step = self.content.setdefault(prefix, TestStep(prefix, assert_timeout=self.timeout,
                                                             sf_connection=get_sf_connection()))
-            if "-assert." in filename.lower():
+            if "assert" in filename.lower():
                 step.set_assertion(filename)
                 continue
 
-            if "-delete." in filename.lower():
+            if "delete" in filename.lower():
                 step.set_delete(filename)
                 continue
 
