@@ -20,10 +20,11 @@ def _get_files(path):
 class TestCase:
     __test__ = False
 
-    def __init__(self, path):
+    def __init__(self, path, timeout=30):
         if not os.access(path, os.R_OK):
             raise AttributeError(f"path {path} is not readable")
         self.path = path
+        self.timeout = timeout
         self.content: Dict[str, TestStep] = OrderedDict()
 
     def setup(self):
@@ -32,7 +33,8 @@ class TestCase:
             if not prefix:
                 logger.warning(f"Prefix of file {filename} is empty")
                 continue
-            step = self.content.setdefault(prefix, TestStep(prefix, sf_connection=get_sf_connection()))
+            step = self.content.setdefault(prefix, TestStep(prefix, assert_timeout=self.timeout,
+                                                            sf_connection=get_sf_connection()))
             if "assert" in filename.lower():
                 step.set_assertion(filename)
                 continue

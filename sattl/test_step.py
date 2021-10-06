@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import List
 from sattl.logger import logger
 from sattl.salesforce import SalesforceConnection, SalesforceObject
+from sattl.retry_with_timeout import RetryWithTimeout
 import yaml
 from copy import copy
 
@@ -9,6 +10,7 @@ from copy import copy
 @dataclass
 class TestStep:
     prefix: str
+    assert_timeout: int
     sf_connection: SalesforceConnection = None
     assertion: str = None
     manifests: List = field(default_factory=list)
@@ -31,7 +33,7 @@ class TestStep:
         for manifest in self.manifests:
             TestManifest(manifest, self.sf_connection).apply()
         if self.assertion:
-            TestAssert(self.assertion, self.sf_connection).validate()
+            RetryWithTimeout(TestAssert(self.assertion, self.sf_connection).validate, seconds=self.assert_timeout)
 
 
 @dataclass

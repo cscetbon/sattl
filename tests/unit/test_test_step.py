@@ -9,8 +9,8 @@ from sattl.salesforce import SalesforceObject
 @pytest.fixture
 def sample_test_step():
     return TestStep(
-        prefix="00", manifests=["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"], assertion="00-assert.yaml",
-        sf_connection=Mock(),
+        prefix="00", assert_timeout=10, manifests=["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"],
+        assertion="00-assert.yaml", sf_connection=Mock(),
     )
 
 
@@ -35,7 +35,7 @@ def test_step_fails_if_multiple_assertions(sample_test_step):
     (None, ["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"]),
 ])
 def test_step(assertion, manifests):
-    step = TestStep(prefix="00", manifests=None, assertion=assertion)
+    step = TestStep(prefix="00", assert_timeout=10, manifests=None, assertion=assertion)
     assert step.manifests == []
     assert step.assertion == assertion
     for manifest in manifests:
@@ -43,8 +43,14 @@ def test_step(assertion, manifests):
     assert step.manifests == manifests
 
 
+class CallFunctionPassed:
+    def __init__(self, func, seconds):
+        func()
+
+
 def test_step_fails_when_apply_fails(sample_test_step):
     with pytest.raises(Exception), \
+         patch('sattl.test_step.RetryWithTimeout', CallFunctionPassed), \
          patch.object(TestManifest, "apply", side_effect=Exception) as mock_apply, \
          patch.object(TestAssert, "validate") as mock_validate:
         sample_test_step.run()
@@ -55,6 +61,7 @@ def test_step_fails_when_apply_fails(sample_test_step):
 
 def test_step_fails_when_assert_fails(sample_test_step):
     with pytest.raises(Exception), \
+         patch('sattl.test_step.RetryWithTimeout', CallFunctionPassed), \
          patch('sattl.test_step.TestManifest') as mock_test_manifest, \
          patch('sattl.test_step.TestAssert') as mock_test_assert:
         mock_test_assert().validate.side_effect = Exception
