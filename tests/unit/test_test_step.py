@@ -1,9 +1,9 @@
-import pytest
-from mock import patch, mock_open, MagicMock, Mock
-import yaml
-
 from sattl.test_step import TestStep, TestManifest, TestAssert, TestDelete
 from sattl.salesforce import SalesforceObject
+import yaml
+
+import pytest
+from mock import patch, mock_open, MagicMock, Mock
 
 
 @pytest.fixture
@@ -50,10 +50,10 @@ def test_step(delete, assertion, manifests):
     assert step.manifests == manifests
 
 
-def test_step_manifests_and_asserts(sample_test_step):
+def test_step_run(sample_test_step):
     with patch.object(TestManifest, "apply") as mock_apply, \
          patch.object(TestAssert, "validate") as mock_validate, \
-        patch.object(TestDelete, "apply") as mock_delete:
+         patch.object(TestDelete, "apply") as mock_delete:
         sample_test_step.run()
 
     assert mock_apply.call_count == 2
@@ -64,7 +64,7 @@ def test_step_manifests_and_asserts(sample_test_step):
 def test_step_fails_when_apply_fails(sample_test_step):
     sample_test_step.assertion = None
 
-    with pytest.raises(Exception), patch.object(TestManifest, "apply", side_effect=[Exception, ""]) as mock_apply:
+    with pytest.raises(Exception), patch.object(TestManifest, "apply", side_effect=Exception) as mock_apply:
         sample_test_step.run()
 
     mock_apply.assert_called_once()
