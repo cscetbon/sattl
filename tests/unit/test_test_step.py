@@ -4,6 +4,7 @@ import yaml
 
 import pytest
 from mock import patch, mock_open, MagicMock, Mock
+from functools import partial
 
 
 @pytest.fixture
@@ -77,14 +78,9 @@ def test_step_fails_when_apply_fails(sample_test_step):
     mock_apply.assert_called_once()
 
 
-class CallFunctionPassed:
-    def __init__(self, func, seconds):
-        func()
-
-
 def test_step_fails_when_assert_always_fails(sample_test_step):
     with pytest.raises(Exception), \
-         patch('sattl.test_step.RetryWithTimeout', CallFunctionPassed), \
+         patch('sattl.test_step.RetryWithTimeout', partial(lambda func, seconds: func())), \
          patch('sattl.test_step.TestManifest') as mock_test_manifest, \
          patch('sattl.test_step.TestAssert') as mock_test_assert:
         mock_test_assert().validate.side_effect = Exception
@@ -97,7 +93,7 @@ def test_step_fails_when_assert_always_fails(sample_test_step):
 def test_step_retries_asserts(sample_test_step):
     with patch.object(TestManifest, "apply") as mock_apply, \
          patch.object(TestAssert, "validate", side_effect=[Exception, Exception, 1]) as mock_validate, \
-        patch.object(TestDelete, "apply") as mock_delete:
+         patch.object(TestDelete, "apply") as mock_delete:
         sample_test_step.manifests.pop()
         sample_test_step.run()
 
