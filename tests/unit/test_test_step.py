@@ -43,33 +43,6 @@ def test_step(assertion, manifests):
     assert step.manifests == manifests
 
 
-class CallFunctionPassed:
-    def __init__(self, func, seconds):
-        func()
-
-
-def test_step_fails_when_apply_fails(sample_test_step):
-    with pytest.raises(Exception), \
-         patch('sattl.test_step.RetryWithTimeout', CallFunctionPassed), \
-         patch.object(TestManifest, "apply", side_effect=Exception) as mock_apply, \
-         patch.object(TestAssert, "validate") as mock_validate:
-        sample_test_step.run()
-
-    mock_apply.assert_called_once()
-    mock_validate.assert_not_called()
-
-
-def test_step_fails_when_assert_fails(sample_test_step):
-    with pytest.raises(Exception), \
-         patch('sattl.test_step.RetryWithTimeout', CallFunctionPassed), \
-         patch('sattl.test_step.TestManifest') as mock_test_manifest, \
-         patch('sattl.test_step.TestAssert') as mock_test_assert:
-        mock_test_assert().validate.side_effect = Exception
-        sample_test_step.run()
-    assert mock_test_manifest().apply.call_count == 2
-    mock_test_assert().validate.assert_called_once()
-
-
 def test_step_manifests_and_asserts(sample_test_step):
     with patch.object(TestManifest, "apply") as mock_apply, \
          patch.object(TestAssert, "validate") as mock_validate:
@@ -79,14 +52,52 @@ def test_step_manifests_and_asserts(sample_test_step):
     mock_validate.assert_called_once()
 
 
+class CallFunctionPassed:
+    def __init__(self, func, seconds):
+        func()
+
+
+def test_step_fails_when_apply_fails(sample_test_step):
+    with pytest.raises(Exception), \
+         patch('sattl.test_step.RetryWithTimeout', CallFunctionPassed), \
+         patch.object(TestManifest, "apply", side_effect=[Exception, None]) as mock_apply, \
+         patch.object(TestAssert, "validate") as mock_validate:
+        sample_test_step.run()
+
+    mock_apply.assert_called_once()
+    mock_validate.assert_not_called()
+
+
+def test_step_fails_when_assert_always_fails(sample_test_step):
+    with pytest.raises(Exception), \
+         patch('sattl.test_step.RetryWithTimeout', CallFunctionPassed), \
+         patch('sattl.test_step.TestManifest') as mock_test_manifest, \
+         patch('sattl.test_step.TestAssert') as mock_test_assert:
+        mock_test_assert().validate.side_effect = Exception
+        sample_test_step.run()
+
+    assert mock_test_manifest().apply.call_count == 2
+    mock_test_assert().validate.assert_called_once()
+
+
+def test_step_retries_asserts(sample_test_step):
+    with patch.object(TestManifest, "apply") as mock_apply, \
+         patch.object(TestAssert, "validate", side_effect=[Exception, Exception, 1]) as mock_validate:
+        sample_test_step.manifests.pop()
+        sample_test_step.run()
+
+    mock_apply.assert_called_once()
+    assert mock_validate.call_count == 3
+
+
 def test_assert_succeeds(yaml_content_of_sf_objects, sample_object_content):
-    sf_connection = MagicMock()
+    mock_sf_connection = MagicMock()
     with patch("builtins.open", mock_open(read_data=yaml_content_of_sf_objects)), \
          patch('sattl.test_step.SalesforceObject.matches') as mock_so_matches:
-        test_assert = TestAssert("00-assert.yaml", sf_connection=sf_connection)
+        test_assert = TestAssert("00-assert.yaml", sf_connection=mock_sf_connection)
         test_assert.validate()
     assert mock_so_matches.call_count == 5
-    mock_so_matches.assert_called_with(SalesforceObject(sf_connection, sample_object_content))
+    mock_so_matches.assert_called_with(SalesforceObject(mock_sf_connection, sample_object_content))
 
 
 def test_assert_fails(sample_object_content):
