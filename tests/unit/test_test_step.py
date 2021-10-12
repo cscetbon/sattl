@@ -1,9 +1,7 @@
 from sattl.test_step import TestStep, TestManifest, TestAssert, TestDelete
-from sattl.salesforce import SalesforceObject
-import yaml
 
 import pytest
-from mock import patch, mock_open, MagicMock, Mock
+from mock import patch, mock_open, Mock
 from functools import partial
 
 
@@ -13,16 +11,6 @@ def sample_test_step():
         prefix="00", assert_timeout=10, manifests=["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"],
         assertion="00-assert.yaml", delete="00-delete.yaml", sf_connection=Mock(),
     )
-
-
-@pytest.fixture
-def sample_object_content():
-    return dict(type="Account", externalID=dict(Slug__c="aaa"), name="bbb")
-
-
-@pytest.fixture
-def yaml_content_of_sf_objects(sample_object_content):
-    return yaml.dump_all([*(sample_object_content,)*5])
 
 
 def test_step_fails_if_multiple_assertions(sample_test_step):
@@ -102,38 +90,16 @@ def test_step_retries_asserts(sample_test_step):
     assert mock_validate.call_count == 3
 
 
-def test_assert_succeeds(yaml_content_of_sf_objects, sample_object_content):
-    mock_sf_connection = MagicMock()
-    with patch("builtins.open", mock_open(read_data=yaml_content_of_sf_objects)), \
-         patch('sattl.test_step.SalesforceObject.matches') as mock_so_matches:
-        test_assert = TestAssert("00-assert.yaml", sf_connection=mock_sf_connection)
-        test_assert.validate()
-    assert mock_so_matches.call_count == 5
-    mock_so_matches.assert_called_with(SalesforceObject(mock_sf_connection, sample_object_content))
-
-
-def test_assert_fails(sample_object_content):
-    content = yaml.dump_all([*(sample_object_content,)*2])
-    with patch("builtins.open", mock_open(read_data=content)), \
-         patch('sattl.test_step.SalesforceObject.matches', return_value=False) as mock_so_matches, \
-         pytest.raises(Exception) as exc:
-        TestAssert("00-assert.yaml", sf_connection=MagicMock()).validate()
-
-    assert mock_so_matches.call_count == 1
-    assert str(exc.value) == ("Failed to assert object "
-                              "{'externalID': {'Slug__c': 'aaa'}, 'name': 'bbb', 'type': 'Account'}")
-
-
-def test_manifest_succeeds(yaml_content_of_sf_objects, sample_object_content):
-    with patch("builtins.open", mock_open(read_data=yaml_content_of_sf_objects)), \
+def test_manifest_succeeds(yaml_with_five_sf_objects, sample_object_content):
+    with patch("builtins.open", mock_open(read_data=yaml_with_five_sf_objects)), \
          patch('sattl.test_step.SalesforceObject.upsert') as mock_so_upsert:
         test_manifest = TestManifest("00-new-account.yaml", sf_connection=Mock())
         test_manifest.apply()
     assert mock_so_upsert.call_count == 5
 
 
-def test_manifest_fails(yaml_content_of_sf_objects, sample_object_content):
-    with patch("builtins.open", mock_open(read_data=yaml_content_of_sf_objects)), \
+def test_manifest_fails(yaml_with_five_sf_objects, sample_object_content):
+    with patch("builtins.open", mock_open(read_data=yaml_with_five_sf_objects)), \
          patch('sattl.test_step.SalesforceObject.upsert', return_value=False) as mock_so_upsert, \
          pytest.raises(Exception) as exc:
         test_manifest = TestManifest("00-new-account.yaml", sf_connection=Mock())
