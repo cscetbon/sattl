@@ -23,5 +23,13 @@ def test_assert_fails(yaml_with_five_sf_objects, sample_object_content):
         TestAssert("00-assert.yaml", sf_connection=MagicMock()).validate()
 
     assert mock_so_matches.call_count == 1
-    assert str(exc.value) == ("Failed to assert object "
-                              "{'externalID': {'Slug__c': 'aaa'}, 'name': 'bbb', 'type': 'Account'}")
+    assert str(exc.value) == ("Assert failed: \n"
+                              "      type: Account\n"
+                              "      externalID:\n"
+                              "-       Slug__c: XC-2\n"
+                              "?                   ^\n"
+                              "+       Slug__c: XC-3\n"
+                              "?                   ^\n"
+                              "RecordTypeId: 0123t000000FkA9AAK\n"
+                              "SIS_Last_Name__c: Coffee\n"
+                              "University_Email__c: jdoe@test.com\n")
