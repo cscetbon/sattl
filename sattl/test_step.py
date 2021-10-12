@@ -51,7 +51,7 @@ class TestStepElement:
     sf_connection: SalesforceConnection
     __test__ = False
 
-    def get_sf_objects(self):
+    def get_sf_objects_from_file(self):
         with open(self.filename) as fh:
             return [
                 SalesforceObject(self.sf_connection, content)
@@ -63,7 +63,7 @@ class TestManifest(TestStepElement):
 
     def apply(self):
         logger.info(f"Applying manifest {self.filename}")
-        for sf_object in self.get_sf_objects():
+        for sf_object in self.get_sf_objects_from_file():
             sf_object.refresh_relations()
             if not sf_object.upsert():
                 raise Exception(f"Failed to upsert object {sf_object}")
@@ -73,16 +73,16 @@ class TestAssert(TestStepElement):
 
     def validate(self):
         logger.info(f"Asserting objects in {self.filename}")
-        for sf_object in self.get_sf_objects():
+        for sf_object in self.get_sf_objects_from_file():
             sf_object.refresh_relations()
             current = copy(sf_object)
-            if not (current.load() and current.matches(sf_object)):
-                raise Exception(f"Failed to assert object {sf_object}")
+            if not (current.load() and (diff := current.differences(sf_object))):
+                raise Exception(f"Assert failed: \n{diff}")
 
 
 class TestDelete(TestStepElement):
 
     def apply(self):
         logger.info(f"Delete objects in {self.filename}")
-        for sf_object in self.get_sf_objects():
+        for sf_object in self.get_sf_objects_from_file():
             sf_object.delete()
