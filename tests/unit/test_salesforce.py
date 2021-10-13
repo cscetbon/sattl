@@ -133,7 +133,8 @@ def test_salesforce_load(salesforce_connection):
 
 @pytest.mark.parametrize('diff, first_name', [
     (None, "Mug"),
-    (("- SIS_First_Name__c: Mug\n"
+    (("  RecordTypeId: 0123t000000FkA9AAK\n"
+      "- SIS_First_Name__c: Mug\n"
       "?                    ^^^\n"
       "+ SIS_First_Name__c: joe\n"
       "?                    ^^^\n"
@@ -159,7 +160,7 @@ def test_salesforce_matches(diff, first_name, salesforce_connection):
     """
     content = CaseInsensitiveDict(yaml.load(content, Loader=yaml.FullLoader))
     local_sf_object = SalesforceObject(salesforce_connection, content)
-    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=[query_account(), query_record_type()]):
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=[query_record_type(), query_account()]):
         local_sf_object.content["SIS_First_Name__c"] = first_name
         local_sf_object.refresh_relations()
         assert sf_object.differences(local_sf_object) == diff

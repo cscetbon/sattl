@@ -76,8 +76,10 @@ class TestAssert(TestStepElement):
         for sf_object in self.get_sf_objects_from_file():
             sf_object.refresh_relations()
             current = copy(sf_object)
-            if not (current.load() and (diff := current.differences(sf_object))):
-                raise Exception(f"Assert failed: \n{diff}")
+            if not current.load():
+                raise Exception("Assert failed because the object can't be accessed")
+            if diff := current.differences(sf_object):
+                raise Exception(f"Assert failed because there are differences:\n{diff}")
 
 
 class TestDelete(TestStepElement):
