@@ -131,19 +131,19 @@ def test_salesforce_load(salesforce_connection):
     }
 
 
-@pytest.mark.parametrize('diff, first_name', [
-    (None, "Mug"),
-    (("  RecordTypeId: 0123t000000FkA9AAK\n"
-      "- SIS_First_Name__c: Mug\n"
-      "?                    ^^^\n"
-      "+ SIS_First_Name__c: joe\n"
-      "?                    ^^^\n"
-      "  SIS_Last_Name__c: Coffee\n"
-      "  Slug__c: XC-2\n"
-      "  University_Email__c: jdoe@test.com\n"
-      "  type: Account\n"), "joe")
+@pytest.mark.parametrize('first_name, diff', [
+    ("Mug", None),
+    ("Joe", ("  RecordTypeId: 0123t000000FkA9AAK\n"
+             "- SIS_First_Name__c: Mug\n"
+             "?                    ^^^\n"
+             "+ SIS_First_Name__c: Joe\n"
+             "?                    ^^^\n"
+             "  SIS_Last_Name__c: Coffee\n"
+             "  Slug__c: XC-2\n"
+             "  University_Email__c: jdoe@test.com\n"
+             "  type: Account\n"))
 ])
-def test_salesforce_matches(diff, first_name, salesforce_connection):
+def test_salesforce_matches(first_name, diff, salesforce_connection):
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
         assert sf_object.load() is True
