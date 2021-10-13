@@ -109,12 +109,13 @@ class SalesforceObject:
                 other.content.items() <= self.content.items()):
             return
 
-        intersect_content = {key: self.content[key] for key in self.content.keys() & other.content.keys() }
-        diff = ndiff(
-            self.as_yaml_split_with_content(intersect_content),
-            other.as_yaml_split_with_content(other.content)
+        intersect_content = {key: self.content[key] for key in self.content.keys() & other.content.keys()}
+        return "".join(
+            ndiff(
+                self.as_yaml_split_with_content(intersect_content),
+                other.as_yaml_split_with_content(other.content)
+            )
         )
-        return "".join(diff)
 
     def load(self):
         try:
