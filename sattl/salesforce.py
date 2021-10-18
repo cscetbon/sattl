@@ -124,8 +124,7 @@ class SalesforceObject:
             self.content = CaseInsensitiveDict(result)
             return True
         except SalesforceResourceNotFound:
-            pass
-        return False
+            return False
 
     def delete(self):
         try:
