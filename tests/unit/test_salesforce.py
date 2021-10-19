@@ -131,8 +131,19 @@ def test_salesforce_load(salesforce_connection):
     }
 
 
-@pytest.mark.parametrize('match,first_name', [(True, "Mug"), (False, "joe")])
-def test_salesforce_matches(match, first_name, salesforce_connection):
+@pytest.mark.parametrize('first_name, diff', [
+    ("Mug", None),
+    ("Joe", ("  RecordTypeId: 0123t000000FkA9AAK\n"
+             "- SIS_First_Name__c: Mug\n"
+             "?                    ^^^\n"
+             "+ SIS_First_Name__c: Joe\n"
+             "?                    ^^^\n"
+             "  SIS_Last_Name__c: Coffee\n"
+             "  Slug__c: XC-2\n"
+             "  University_Email__c: jdoe@test.com\n"
+             "  type: Account\n"))
+])
+def test_salesforce_matches(first_name, diff, salesforce_connection):
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
         assert sf_object.load() is True
@@ -149,9 +160,10 @@ def test_salesforce_matches(match, first_name, salesforce_connection):
     """
     content = CaseInsensitiveDict(yaml.load(content, Loader=yaml.FullLoader))
     local_sf_object = SalesforceObject(salesforce_connection, content)
-    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=[query_account(), query_record_type()]):
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=[query_record_type(), query_account()]):
         local_sf_object.content["SIS_First_Name__c"] = first_name
-        assert sf_object.matches(local_sf_object) is match
+        local_sf_object.refresh_relations()
+        assert sf_object.differences(local_sf_object) == diff
 
 
 def test_salesforce_delete(salesforce_connection):

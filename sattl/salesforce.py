@@ -1,9 +1,11 @@
 from os import getenv
 
+import yaml
 from simple_salesforce import Salesforce, SalesforceResourceNotFound
 from sattl.config import Config
 from requests.structures import CaseInsensitiveDict
 from typing import Dict
+from difflib import ndiff
 
 ID = "Id"
 EXTERNAL_ID = "externalId"
@@ -32,6 +34,9 @@ class SalesforceExternalID:
 
     def __repr__(self):
         return f"{self.__class__.__name__}(field={self.field}, value={self.value})"
+
+    def as_dict(self):
+        return {self.field: self.value}
 
 
 class SalesforceRelation:
@@ -83,6 +88,11 @@ class SalesforceObject:
     def __eq__(self, other):
         return self.content == other.content
 
+    def as_yaml_split_with_content(self, content: dict):
+        return yaml.dump(dict(
+            type=self.type, **self.external_id.as_dict(), **content
+        )).splitlines(keepends=True)
+
     def refresh_relations(self):
         if not self.relations:
             return
@@ -90,14 +100,22 @@ class SalesforceObject:
         self.content.update({field: relation.get_id(self.sf_connection) for field, relation in self.relations.items()})
         self.relations = {}
 
-    def matches(self, other):
+    def differences(self, other):
         """
         To match other, self needs to have the same type, the same external id and other's content
         must be a subset of its
         """
-        if self.type != other.type or self.external_id != other.external_id:
-            return False
-        return other.content.items() <= self.content.items()
+        if (self.type == other.type and self.external_id == other.external_id and
+                other.content.items() <= self.content.items()):
+            return
+
+        intersect_content = {key: self.content[key] for key in self.content.keys() & other.content.keys()}
+        return "".join(
+            ndiff(
+                self.as_yaml_split_with_content(intersect_content),
+                other.as_yaml_split_with_content(other.content)
+            )
+        )
 
     def load(self):
         try:
@@ -106,8 +124,7 @@ class SalesforceObject:
             self.content = CaseInsensitiveDict(result)
             return True
         except SalesforceResourceNotFound:
-            pass
-        return False
+            return False
 
     def delete(self):
         try:
