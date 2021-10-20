@@ -25,7 +25,7 @@ def test_cli_no_test_case_option():
         result = runner.invoke(run, ["--domain", "fake", "/folder"])
         assert result.exit_code == 0
         assert mock_test_case.call_args_list == [
-            call(domain="fake", is_sandbox=True, path=folder, timeout=30) for folder in folders
+            call(domain="fake", is_sandbox=True, path=f"/folder/{folder}", timeout=30) for folder in folders
         ]
 
 

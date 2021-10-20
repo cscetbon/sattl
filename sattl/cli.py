@@ -14,7 +14,7 @@ def run(domain, is_prod, timeout, test_case, path):
     """Sattl runs a test suite against SF"""
     if is_prod:
         click.confirm('You chose to run against prod, is that really what you want?', abort=True)
-    test_case_dirs = os.listdir(path) if not test_case else [path]
+    test_case_dirs = [os.path.join(path, subdir) for subdir in os.listdir(path)] if not test_case else [path]
     for test_case_dir in test_case_dirs:
         test_case = TestCase(path=test_case_dir, domain=domain, is_sandbox=not is_prod, timeout=timeout)
         test_case.setup()
