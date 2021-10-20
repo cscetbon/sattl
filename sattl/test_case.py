@@ -30,7 +30,7 @@ class TestCase:
 
     def setup(self):
         for filename in _get_files(self.path):
-            prefix = filename.split(DELIMITER)[0]
+            prefix = os.path.basename(filename.split(DELIMITER)[0])
             if not prefix:
                 logger.warning(f"Prefix of file {filename} is empty")
                 continue

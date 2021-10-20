@@ -1,22 +1,24 @@
 import signal
 import time
 import sys
+from sattl.logger import logger
 
 
 class TimeoutException(Exception):
     pass
 
 
-class Timeout:
-    def __init__(self, seconds=1, error_message='Timeout'):
-        self.seconds = seconds
-        self.error_message = error_message
+def _handle_timeout(*_):
+    raise TimeoutException("Timeout")
 
-    def handle_timeout(self, *_):
-        raise TimeoutException(self.error_message)
+
+class Timeout:
+    def __init__(self, timeout=1):
+        self.seconds = timeout
+
 
     def __enter__(self):
-        signal.signal(signal.SIGALRM, self.handle_timeout)
+        signal.signal(signal.SIGALRM, _handle_timeout)
         signal.alarm(self.seconds)
 
     def __exit__(self, *_):
@@ -24,15 +26,19 @@ class Timeout:
 
 
 class RetryWithTimeout:
-    def __init__(self, func, seconds):
+    def __init__(self, func, timeout, retry_delay=5):
+        self.last_exception = ""
         try:
-            with Timeout(seconds=seconds):
+            with Timeout(timeout):
                 while True:
                     try:
                         func()
                         break
+                    except TimeoutException:
+                        raise
                     except:
+                        logger.info(f"Operation failed, retrying in {retry_delay} seconds")
                         self.last_exception = sys.exc_info()[1]
-                        time.sleep(5)
+                        time.sleep(retry_delay)
         except TimeoutException:
             raise TimeoutException(self.last_exception)
