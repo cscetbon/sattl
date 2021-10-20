@@ -13,9 +13,8 @@ DELIMITER = "-"
 
 def _get_files(path):
     return [
-        filename for filename in sorted(os.listdir(path)) if (
-                filename and DELIMITER in filename and os.path.isfile(filename)
-        )
+        os.path.join(path, filename) for filename in sorted(os.listdir(path))
+        if filename and DELIMITER in filename and os.path.isfile(os.path.join(path, filename))
     ]
 
 
