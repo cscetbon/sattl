@@ -1,4 +1,6 @@
 import signal
+import time
+import sys
 
 
 class TimeoutException(Exception):
@@ -23,12 +25,14 @@ class Timeout:
 
 class RetryWithTimeout:
     def __init__(self, func, seconds):
-        with Timeout(seconds=seconds):
-            while True:
-                try:
-                    func()
-                    break
-                except TimeoutException:
-                    raise
-                except:
-                    pass
+        try:
+            with Timeout(seconds=seconds):
+                while True:
+                    try:
+                        func()
+                        break
+                    except:
+                        self.last_exception = sys.exc_info()[1]
+                        time.sleep(5)
+        except TimeoutException:
+            raise TimeoutException(self.last_exception)

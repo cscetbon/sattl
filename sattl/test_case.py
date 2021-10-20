@@ -5,6 +5,7 @@ from collections import OrderedDict
 from sattl.logger import logger
 from sattl.salesforce import get_sf_connection
 from sattl.test_step import TestStep
+from sattl.retry_with_timeout import TimeoutException
 
 
 DELIMITER = "-"
@@ -22,8 +23,8 @@ def _get_files(path):
 class TestCase:
     path: str
     domain: str
+    timeout: int
     is_sandbox: bool = True
-    timeout: int = 30
     content: Dict[str, TestStep] = field(default_factory=OrderedDict)
 
     __test__ = False
@@ -52,5 +53,9 @@ class TestCase:
             raise AttributeError(f"path {self.path} is empty")
 
     def run(self):
-        for step in self.content.values():
-            step.run()
+        try:
+            for step in self.content.values():
+                step.run()
+        except TimeoutException as exc:
+            print(f"\n{exc}")
+            exit(1)
