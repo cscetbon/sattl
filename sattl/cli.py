@@ -19,6 +19,5 @@ def run(domain, test_case, path, is_prod):
         test_case.run()
 
 
-
 if __name__ == '__main__':
     run()
