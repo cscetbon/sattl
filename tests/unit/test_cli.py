@@ -1,11 +1,11 @@
 from click.testing import CliRunner
 from sattl.cli import run
-from mock import patch
+from mock import patch, call
 
 runner = CliRunner()
 
 
-def test_cli_required_params():
+def test_cli_fails_wo_required_params():
     result = runner.invoke(run, ["/tmp"])
     assert result.exit_code == 2
     assert "Missing option '--domain'" in result.output
@@ -14,17 +14,44 @@ def test_cli_required_params():
     assert result.exit_code == 2
     assert "Missing argument 'PATH'" in result.output
 
-    result = runner.invoke(run, ["--domain", "dom-ain", "/tmp"])
-    assert result.exit_code == 0
-
-
-def test_cli_is_sandbox():
-    with patch("sattl.cli.check_is_sandbox") as check_is_sandbox:
-        result = runner.invoke(run, ["--domain", "dom-ain", "--is-sandbox", "no", "/tmp"])
-    assert result.exit_code == 0
-    check_is_sandbox.assert_called_once_with(False)
-
-    with patch("sattl.cli.check_is_sandbox") as check_is_sandbox:
+    with patch('os.listdir', return_value=[]):
         result = runner.invoke(run, ["--domain", "dom-ain", "/tmp"])
-    assert result.exit_code == 0
-    check_is_sandbox.assert_called_once_with(True)
+        assert result.exit_code == 0
+
+
+def test_cli_no_test_case_option():
+    folders = [f"folder{i+1}" for i in range(4)]
+    with patch('os.listdir', return_value=folders), patch('sattl.cli.TestCase') as mock_test_case:
+        result = runner.invoke(run, ["--domain", "fake", "/folder"])
+        assert result.exit_code == 0
+        assert mock_test_case.call_args_list == [
+            call(domain="fake", is_sandbox=True, path=f"/folder/{folder}", timeout=30) for folder in folders
+        ]
+
+
+def test_cli_test_case_option():
+    with patch('os.listdir', return_value=[]), patch('sattl.cli.TestCase') as mock_test_case:
+        result = runner.invoke(run, ["--domain", "fake", "--test-case", "/folder"])
+        assert result.exit_code == 0
+        mock_test_case.assert_called_once_with(domain="fake", is_sandbox=True, path='/folder', timeout=30)
+
+
+def test_cli_timeout_option():
+    with patch('os.listdir', return_value=[]), patch('sattl.cli.TestCase') as mock_test_case:
+        result = runner.invoke(run, ["--domain", "fake", "--timeout", "60", "--test-case", "/folder"])
+        assert result.exit_code == 0
+        mock_test_case.assert_called_once_with(domain="fake", is_sandbox=True, path='/folder', timeout=60)
+
+
+def test_cli_is_prod_option():
+    with patch('os.listdir', return_value=[]), patch('sattl.cli.TestCase') as mock_test_case:
+        result = runner.invoke(run, ["--domain", "fake", "--is-prod", "--test-case", "/folder"])
+        assert result.exit_code == 1
+        assert "Aborted!" in result.output
+        mock_test_case.assert_not_called()
+
+        with patch("click.confirm") as mock_confirm:
+            result = runner.invoke(run, ["--domain", "fake", "--is-prod", "--test-case", "/folder"])
+            assert result.exit_code == 0
+            mock_confirm.assert_called_once()
+            mock_test_case.assert_called_once_with(domain="fake", is_sandbox=False, path='/folder', timeout=30)

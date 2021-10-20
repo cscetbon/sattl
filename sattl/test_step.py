@@ -40,7 +40,7 @@ class TestStep:
         for manifest in self.manifests:
             TestManifest(manifest, self.sf_connection).apply()
         if self.assertion:
-            RetryWithTimeout(TestAssert(self.assertion, self.sf_connection).validate, seconds=self.assert_timeout)
+            RetryWithTimeout(TestAssert(self.assertion, self.sf_connection).validate, timeout=self.assert_timeout)
         if self.delete:
             TestDelete(self.delete, self.sf_connection).apply()
 

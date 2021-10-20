@@ -11,9 +11,11 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
     ],
-    entry_points={"console_scripts": [
-        "sattl = sattl.cli:main"
-    ]},
+    entry_points={
+        "console_scripts": [
+            "sattl = sattl.cli:run"
+        ]
+    },
     packages=find_packages(exclude=["doc", "tests"]),
     project_urls={
         "Source": "https://github.com/2uinc/sattl",

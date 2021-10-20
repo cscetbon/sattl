@@ -149,6 +149,5 @@ class SalesforceObject:
         return self.sf_connection.__getattr__(self.type)
 
 
-def get_sf_connection():
-    config = Config(is_sandbox=getenv("IS_SANDBOX", True), domain=getenv("SF_DOMAIN"))
-    return SalesforceConnection(config)
+def get_sf_connection(is_sandbox: bool, domain: str):
+    return SalesforceConnection(Config(is_sandbox, domain))
