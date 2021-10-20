@@ -1,18 +1,23 @@
 import click
+import os
+from sattl.test_case import TestCase
 
 
 @click.command()
 @click.option("--domain", required=True, type=str)
-@click.option("--is-sandbox", default=True, type=bool)
-@click.argument("path", required=True, type=click.Path())
+@click.option("--test-case", is_flag=True)
+@click.option("--is-prod", is_flag=True)
+@click.argument("path", required=True, type=click.Path(readable=True))
 @click.version_option()
-def run(domain, path, is_sandbox):
+def run(domain, test_case, path, is_prod):
     """Sattl runs a test suite against SF"""
-    check_is_sandbox(is_sandbox)
+    if is_prod:
+        click.confirm('You chose to run against prod, is that really what you want?', abort=True)
+    test_case_dirs = os.listdir(path) if not test_case else [path]
+    for test_case_dir in test_case_dirs:
+        test_case = TestCase(path=test_case_dir, domain=domain, is_sandbox=not is_prod).setup()
+        test_case.run()
 
-
-def check_is_sandbox(is_sandbox):
-    pass
 
 
 if __name__ == '__main__':

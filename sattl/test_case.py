@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass, field
 from typing import Dict
 from collections import OrderedDict
 from sattl.logger import logger
@@ -17,15 +18,15 @@ def _get_files(path):
     ]
 
 
+@dataclass
 class TestCase:
-    __test__ = False
+    path: str
+    domain: str
+    is_sandbox: bool = True
+    timeout: int = 30
+    content: Dict[str, TestStep] = field(default_factory=OrderedDict)
 
-    def __init__(self, path, timeout=30):
-        if not os.access(path, os.R_OK):
-            raise AttributeError(f"path {path} is not readable")
-        self.path = path
-        self.timeout = timeout
-        self.content: Dict[str, TestStep] = OrderedDict()
+    __test__ = False
 
     def setup(self):
         for filename in _get_files(self.path):
@@ -33,8 +34,10 @@ class TestCase:
             if not prefix:
                 logger.warning(f"Prefix of file {filename} is empty")
                 continue
-            step = self.content.setdefault(prefix, TestStep(prefix, assert_timeout=self.timeout,
-                                                            sf_connection=get_sf_connection()))
+            step = self.content.setdefault(
+                prefix, TestStep(prefix, assert_timeout=self.timeout,
+                                 sf_connection=get_sf_connection(self.is_sandbox, self.domain))
+            )
             if "assert" in filename.lower():
                 step.set_assertion(filename)
                 continue
