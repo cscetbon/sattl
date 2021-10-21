@@ -1,0 +1,21 @@
+version: "3.7"
+
+x-common: &common
+  volumes:
+    - ./sattl:/app/sattl
+    - ./ipython_config.py:/app/ipython_config.py
+    - ./tests:/app/tests
+    - ./config.json:/app/config.json:ro
+
+services:
+  sattl:
+    <<: *common
+    build:
+      context: ./
+      target: base
+
+  tests:
+    <<: *common
+    build:
+      context: ./
+      target: tests
