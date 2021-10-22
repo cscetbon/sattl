@@ -12,8 +12,6 @@ ENTRYPOINT ["sattl"]
 
 FROM base AS tests
 
-WORKDIR /app
-
 RUN pip install --no-cache-dir -e '.[testing]'
 COPY tests tests
 COPY .github/workflows/config.json.sample config.json
