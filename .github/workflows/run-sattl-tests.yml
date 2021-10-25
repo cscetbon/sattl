@@ -44,7 +44,6 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY:  enrollment-systems/sattl
       run: |
-#        cd ..
         export TAG=${GITHUB_REF##*/}
         echo $TAG
         tree
