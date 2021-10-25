@@ -5,11 +5,7 @@
         /_______  /\____|__  /____|     |____|   |_______ \
                 \/         \/                            \/
 
-**SA**lesforce **T**esting **T**oo**L**
-
-# Using Sattl
-
-Sattl is a CLI that runs tests from a provided folder.
+**SA**lesforce **T**esting **T**oo**L** or Sattl is a CLI that runs tests from a provided folder.
 
 ```shell
 sattl --timeout 900 --domain my-domain your/sattl_tests/location/
