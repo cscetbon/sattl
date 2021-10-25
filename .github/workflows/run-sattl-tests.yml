@@ -7,6 +7,8 @@ jobs:
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
+    - name: Copy test config
+      run: cp .github/workflows/config.json.sample config.json
     - name: Run tests
       run: docker-compose run tests
 
