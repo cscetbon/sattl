@@ -19,8 +19,7 @@ jobs:
         key: ${{ hashFiles('setup.cfg') }}
     - name: Setup dependencies
       run: |
-        pip install -i https://tech-pypi-prod.2u.com/simple -e .
-        pip install -i https://tech-pypi-prod.2u.com/simple '.[testing]'
+        pip install -e '.[testing]'
     - name: Run tests
       run: python -m pytest
 
