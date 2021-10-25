@@ -48,6 +48,7 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
         echo "TAGS:"
+        git fetch origin --tags
         echo $(git tag)
         if [ "$(git describe --exact-match --tags 2>/dev/null) 2>/dev/null)" = "$TAG" ]
         then
