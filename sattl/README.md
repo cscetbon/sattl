@@ -7,6 +7,27 @@
 
 **SA**lesforce **T**esting **T**oo**L**
 
+# Using Sattl
+
+Sattl is a CLI that runs tests from a provided folder.
+
+```shell
+sattl --timeout 900 --domain my-domain your/sattl_tests/location/
+```
+In the command above, we run all test cases found at `your/sattl_tests/location/`. Here is what Sattl is going to do:
+- for each Test Case found, meaning folder, Sattl will list all files in it and group them by their prefix to create
+Test Steps
+- for each Test Step Sattl will:
+  * sequentially create objects found in manifests (if there are)
+  * test if objects contained in the assert file (if there is one) exist and match. The whole assert is tested until
+  a timeout is exceeded (here 900 seconds) and in that case the test stops there and print the difference found
+  * delete all objects contained in the delete file (if there is one)
+
+We can also run only a specific Test Case by using a command like
+```shell
+sattl --domain my-domain --test-case your/sattl_tests/your-test-case/
+```
+
 # Jargon
 
 ### Manifest(s)
@@ -25,28 +46,6 @@ only and Assert, or only one Delete
 ### Test Case
 Set of Test Steps. Test Steps are ordered alphabetically and grouped by their prefix, whicih is the starting
 string/number before the character -
-
-# Using Sattl
-
-Sattl is a CLI that runs tests from a provided folder.
-
-
-```shell
-sattl --timeout 900 --domain my-domain your/sattl_tests/location/
-```
-In the command above, we run all test cases found at `your/sattl_tests/location/`. Here is what Sattl is going to do:
-- for each Test Case found, meaning folder, Sattl will list all files in it and group them by their prefix to create
-Test Steps
-- for each Test Step Sattl will:
-  * sequentially create objects found in manifests (if there are)
-  * test if objects contained in the assert file (if there is one) exist and match. The whole assert is tested until
-  a timeout is exceeded (here 900 seconds) and in that case the test stops there and print the difference found
-  * delete all objects contained in the delete file (if there is one)
-
-We can also run only a specific Test Case by using a command like
-```shell
-sattl --domain my-domain --test-case your/sattl_tests/your-test-case/
-```
 
 # Example of a Test Case
 
