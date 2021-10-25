@@ -24,6 +24,46 @@ We can also run only a specific Test Case by using a command like
 sattl --domain my-domain --test-case your/sattl_tests/your-test-case/
 ```
 
+# Docker
+## Running tests locally
+Using docker-compose we can run tests
+```shell
+$ docker-compose run tests
+============================================================= test session starts =============================================================
+platform linux -- Python 3.8.12, pytest-6.2.3, py-1.10.0, pluggy-0.13.1
+rootdir: /app
+collected 40 items
+
+tests/unit/test_cli.py .....                                                                                                            [ 12%]
+tests/unit/test_config.py ..                                                                                                            [ 17%]
+tests/unit/test_retry.py ....                                                                                                           [ 27%]
+tests/unit/test_salesforce.py ..............                                                                                            [ 62%]
+tests/unit/test_test_assert.py ...                                                                                                      [ 70%]
+tests/unit/test_test_case.py ..                                                                                                         [ 75%]
+tests/unit/test_test_step.py ..........                                                                                                 [100%]
+
+============================================================= 40 passed in 3.45s ==============================================================
+```
+
+## Using Satll locally
+Using docker-compose we can use Sattl CLI
+```shell
+$ docker-compose run -v ~/Downloads/sattl-tests:/sattl-tests sattl --domain corp-pmx --timeout 10 --test-case /sattl-tests/
+{"timestamp": "2021-10-21T16:29:17.385911Z", "level": "INFO", "name": "root", "message": "Running step sattl"}
+{"timestamp": "2021-10-21T16:29:17.386049Z", "level": "INFO", "name": "root", "message": "Applying manifest /sattl-tests/00-create-account.yaml"}
+{"timestamp": "2021-10-21T16:29:18.261114Z", "level": "INFO", "name": "root", "message": "Asserting objects in /sattl-tests/00-assert.yaml"}
+{"timestamp": "2021-10-21T16:29:18.419878Z", "level": "INFO", "name": "root", "message": "Operation failed, retrying in 5 seconds"}
+{"timestamp": "2021-10-21T16:29:23.431394Z", "level": "INFO", "name": "root", "message": "Asserting objects in /sattl-tests/00-assert.yaml"}
+{"timestamp": "2021-10-21T16:29:23.590106Z", "level": "INFO", "name": "root", "message": "Operation failed, retrying in 5 seconds"}
+
+Assert failed because there are differences:
+  Namespace_University_ID__c: 100001337-UD
+- SIS_First_Name__c: John
++ SIS_First_Name__c: Johnny
+?                        ++
+  type: Account
+```
+
 # Jargon
 
 ### Manifest
