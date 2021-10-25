@@ -2,26 +2,13 @@ name: SATTL
 on: push
 
 jobs:
-  sattl-tests:
+  tests:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
-    - name: Install system requirements
-      run: |
-        sudo apt-get update -y
-        sudo apt-get -y -qq install --no-install-recommends build-essential
-    - name: Copy test config
-      run: cp .github/workflows/config.json.sample config.json
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ hashFiles('setup.cfg') }}
-    - name: Setup dependencies
-      run: |
-        pip install -e '.[testing]'
     - name: Run tests
-      run: python -m pytest
+      run: docker-compose run tests
 
   build-and-push:
     needs: sattl-tests
@@ -40,15 +27,15 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
     - name: Build, tag, and push image to Amazon ECR
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY:  enrollment-systems/sattl
+        IMAGE: ${{ steps.login-ecr.outputs.registry }}/enrollment-systems/sattl
       run: |
         export TAG=${GITHUB_REF##*/}
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
+        docker-compose build sattl
+        docker tag sattl_sattl $IMAGE:$TAG
+        docker push $IMAGE:$TAG
         git fetch origin --tags --quiet
         if [ "$(git describe --exact-match --tags 2>/dev/null)" = "$TAG" ]
         then
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$TAG $ECR_REGISTRY/$ECR_REPOSITORY:prod
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:prod
+          docker tag sattl_sattl $IMAGE:prod
+          docker push $IMAGE:prod
         fi
