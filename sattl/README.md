@@ -14,7 +14,7 @@ In the command above, we run all test cases found at `your/sattl_tests/location/
 - for each Test Case found, meaning folder, Sattl will list all files in it and group them by their prefix to create
 Test Steps
 - for each Test Step Sattl will:
-  * sequentially create objects found in manifests (if there are)
+  * sequentially create objects found in manifests (if there are any)
   * test if objects contained in the assert file (if there is one) exist and match. The whole assert is tested until
   a timeout is exceeded (here 900 seconds) and in that case the test stops there and print the difference found
   * delete all objects contained in the delete file (if there is one)
