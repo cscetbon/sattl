@@ -55,7 +55,7 @@ Let us imagining we have the following
     ├── 01-enrollment.yaml
     ├── 02-assert.yaml
     └── 02-case.yaml
-    ├── 02-delete.yaml
+    ├── 02-delete.yaml (symlink to 00-delete.yaml)
 ```
 We are going to look at the different parts of this Test Case
 
@@ -245,18 +245,7 @@ UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302.
 
 ### Delete
 ##### **`02-delete.yaml`**
-```yaml
-type: Account
-externalID:
-  UUID__c: fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
----
-type: PlatformAccount
-externalID:
-  UUID__c: fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
-```
-
-Sattl deletes the Account object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302 then the PlatformAccount object
-with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302.
+See Delete of Test Step 00 as it is a symlink to `00-delete.yaml`
 
 # Failure of a Test Case
 
