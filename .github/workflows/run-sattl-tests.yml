@@ -32,13 +32,14 @@ jobs:
       env:
         IMAGE: ${{ steps.login-ecr.outputs.registry }}/enrollment-systems/sattl
       run: |
-        export TAG=${GITHUB_REF##*/}
+        TAG=${GITHUB_REF##*/}
         docker-compose build sattl
         docker tag sattl_sattl $IMAGE:$TAG
         docker push $IMAGE:$TAG
-        git fetch origin --tags --quiet
-        if [ "$(git describe --exact-match --tags 2>/dev/null)" = "$TAG" ]
-        then
-          docker tag sattl_sattl $IMAGE:prod
-          docker push $IMAGE:prod
-        fi
+    - name: tag as prod and push image to Amazon ECR
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      env:
+        IMAGE: ${{ steps.login-ecr.outputs.registry }}/enrollment-systems/sattl
+      run: |
+        docker tag sattl_sattl $IMAGE:prod
+        docker push $IMAGE:prod
