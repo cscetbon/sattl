@@ -44,5 +44,7 @@ jobs:
       run: |
         cd ..
         export TAG=${GITHUB_REF##*/}
+        echo $TAG
+        tree
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
