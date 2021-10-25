@@ -45,7 +45,5 @@ jobs:
         ECR_REPOSITORY:  enrollment-systems/sattl
       run: |
         export TAG=${GITHUB_REF##*/}
-        echo $TAG
-        tree
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
