@@ -16,7 +16,7 @@ Test Steps
 - for each Test Step Sattl will:
   * sequentially create objects found in manifests (if there are any)
   * test if objects contained in the assert file (if there is one) exist and match. The whole assert is tested until
-  a timeout is exceeded (here 900 seconds) and in that case the test stops there and print the difference found
+  a timeout is exceeded (here 900 seconds) and in that case the test stops there and prints the difference found
   * delete all objects contained in the delete file (if there is one)
 
 We can also run only a specific Test Case by using a command like
@@ -70,6 +70,22 @@ None
 ### Delete
 ##### **`00-delete.yaml`**
 ```yaml
+type: Case
+externalID:
+  Change_Active_ID__c: fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
+---
+type: Enrollment__c
+externalID:
+  Slug__c: aaa52d9a-520c-4c7e-bbbb-3b6fde10b302:MT-105A-03:HOLDING:2020/1_05
+---
+type: Section__c
+externalID:
+  Slug__c: MT-105A-03:HOLDING:2020/1_05
+---
+type: Course__c
+externalID:
+  Slug__c: MT-105A-03
+---
 type: Account
 externalID:
   UUID__c: fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
@@ -79,8 +95,13 @@ externalID:
   UUID__c: fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
 ```
 
-Sattl deletes the Account object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302, then the PlatformAccount object
-with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302.
+Sattl deletes the following objects sequentially:
+- Case with Change_Active_ID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
+- Enrollment__c with Slug__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302:MT-105A-03:HOLDING:2020/1_05
+- Section__c with Slug__c = MT-105A-03:HOLDING:2020/1_05
+- Course__c with Slug__c = MT-105A-03
+- Account object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
+- PlatformAccount object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
 
 ## Test Step 01
 
@@ -236,3 +257,27 @@ externalID:
 
 Sattl deletes the Account object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302 then the PlatformAccount object
 with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302.
+
+# Failure of a Test Case
+
+If Sattl fails to assert that objects provided exist or match, it will retry every 5 seconds until the provided timeout
+n the CLI command is exceeded. In that case will print an error which is typically the difference between
+the object in the Assert file and in Salesforce:
+
+```
+$ sattl --domain corp-pmx --timeout 10 --test-case ~/Downloads/sattl-tests/
+{"timestamp": "2021-10-20T20:39:25.278502Z", "level": "INFO", "name": "root", "message": "Running step /Users/cscetbon/Downloads/sattl"}
+{"timestamp": "2021-10-20T20:39:25.278782Z", "level": "INFO", "name": "root", "message": "Applying manifest /Users/cscetbon/Downloads/sattl-tests/00-create-account.yaml"}
+{"timestamp": "2021-10-20T20:39:34.075534Z", "level": "INFO", "name": "root", "message": "Asserting objects in /Users/cscetbon/Downloads/sattl-tests/00-assert.yaml"}
+{"timestamp": "2021-10-20T20:39:39.204823Z", "level": "INFO", "name": "root", "message": "Asserting objects in /Users/cscetbon/Downloads/sattl-tests/00-assert.yaml"}
+
+Assert failed because there are differences:
+  Namespace_University_ID__c: 100001337-UD
+- SIS_First_Name__c: John
++ SIS_First_Name__c: Johnny
+?                        ++
+  type: Account
+```
+
+If Sattl fails when trying to create objects found in Manifests or when deleting objects in Delete, it will stop there
+without retrying.

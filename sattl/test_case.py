@@ -1,4 +1,5 @@
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Dict
 from collections import OrderedDict
@@ -9,12 +10,17 @@ from sattl.retry_with_timeout import TimeoutException
 
 
 DELIMITER = "-"
+RE_IS_YAML = re.compile(r"\.ya?ml$")
+
+
+def _is_yaml_file(path, filename):
+    return filename and RE_IS_YAML.search(filename) and os.path.isfile(os.path.join(path, filename))
 
 
 def _get_files(path):
     return [
         os.path.join(path, filename) for filename in sorted(os.listdir(path))
-        if filename and DELIMITER in filename and os.path.isfile(os.path.join(path, filename))
+        if _is_yaml_file(path, filename) and DELIMITER in filename
     ]
 
 
