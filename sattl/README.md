@@ -96,10 +96,10 @@ externalID:
 ```
 
 Sattl deletes the following objects sequentially:
-- Case with Change_Active_ID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
-- Enrollment__c with Slug__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302:MT-105A-03:HOLDING:2020/1_05
-- Section__c with Slug__c = MT-105A-03:HOLDING:2020/1_05
-- Course__c with Slug__c = MT-105A-03
+- Case object with Change_Active_ID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
+- Enrollment__c object with Slug__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302:MT-105A-03:HOLDING:2020/1_05
+- Section__c object with Slug__c = MT-105A-03:HOLDING:2020/1_05
+- Course__c object with Slug__c = MT-105A-03
 - Account object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
 - PlatformAccount object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
 
@@ -121,7 +121,7 @@ relations:
     name: SIS Student
 ```
 
-Sattl creates the Account object with UUID__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302 and all the specified fields.
+Sattl creates Account object with UUID__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302 and all the specified fields.
 
 ##### **`01-course-and-section.yaml`**
 ```yaml
@@ -148,7 +148,7 @@ relations:
     slug__c: MT-105A-03
 ```
 
-Sattl creates the Course__c object with Slug__c = MT-105A-03 and all the specified fields, then the object Section__c
+Sattl creates Course__c object with Slug__c = MT-105A-03 and all the specified fields, then the object Section__c
 with Slug__c = MT-105A-03:HOLDING:2020/1_05 with its fields as well.
 
 ##### **`01-enrollment.yaml`**
@@ -167,7 +167,7 @@ relations:
     UUID__c: aaa52d9a-520c-4c7e-bbbb-3b6fde10b302
 ```
 
-Sattl creates the Enrollment__c object with Slug__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302:MT-105A-03:HOLDING:2020/1_05
+Sattl creates Enrollment__c object with Slug__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302:MT-105A-03:HOLDING:2020/1_05
 and all the specified fields.
 
 ### Assert
@@ -206,7 +206,7 @@ relations:
     Name: Port Authority Case
 ```
 
-Sattl creates the Case object with Change_Active_ID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302 and all the specified
+Sattl creates Case object with Change_Active_ID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302 and all the specified
 fields.
 
 ### Assert
@@ -239,7 +239,7 @@ relations:
         UUID__c: fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
 ```
 
-Sattl asserts the Account object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302 exists and all its fields match
+Sattl asserts Account object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302 exists and all its fields match
 the values provided. It then asserts the same for the PlatformAccount object with
 UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302.
 
@@ -250,7 +250,7 @@ See Delete of Test Step 00 as it is a symlink to `00-delete.yaml`
 # Failure of a Test Case
 
 If Sattl fails to assert that objects provided exist or match, it will retry every 5 seconds until the provided timeout
-n the CLI command is exceeded. In that case will print an error which is typically the difference between
+on the CLI command is exceeded. In that case Sattl prints an error which is typically the difference between
 the object in the Assert file and in Salesforce:
 
 ```
@@ -268,5 +268,5 @@ Assert failed because there are differences:
   type: Account
 ```
 
-If Sattl fails when trying to create objects found in Manifests or when deleting objects in Delete, it will stop there
+If Sattl fails when trying to create objects found in Manifests or when deleting objects from Delete, it will stop there
 without retrying.
