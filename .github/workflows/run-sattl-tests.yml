@@ -47,6 +47,8 @@ jobs:
         export TAG=${GITHUB_REF##*/}
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
+        echo "TAGS:"
+        echo $(git tag)
         if [ "$(git describe --exact-match --tags 2>/dev/null) 2>/dev/null)" = "$TAG" ]
         then
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$TAG $ECR_REGISTRY/$ECR_REPOSITORY:prod
