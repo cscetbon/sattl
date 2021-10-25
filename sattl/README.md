@@ -54,8 +54,8 @@ Let us imagining we have the following
     ├── 01-course-and-section.yaml
     ├── 01-enrollment.yaml
     ├── 02-assert.yaml
-    └── 02-case.yaml
-    ├── 02-delete.yaml (symlink to 00-delete.yaml)
+    ├── 02-case.yaml
+    └── 02-delete.yaml (symlink to 00-delete.yaml)
 ```
 We are going to look at the different parts of this Test Case
 
