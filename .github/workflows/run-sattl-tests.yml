@@ -28,6 +28,8 @@ jobs:
     needs: sattl-tests
     runs-on: ubuntu-latest
     steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -42,7 +44,7 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY:  enrollment-systems/sattl
       run: |
-        cd ..
+#        cd ..
         export TAG=${GITHUB_REF##*/}
         echo $TAG
         tree
