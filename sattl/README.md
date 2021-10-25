@@ -26,7 +26,7 @@ sattl --domain my-domain --test-case your/sattl_tests/your-test-case/
 
 # Jargon
 
-### Manifest(s)
+### Manifest
 YAML file containing one or more objects to be created in Salesforce
 
 ### Assert
@@ -37,7 +37,7 @@ YAML file containing one or more objects that must be deleted in Salesforce
 
 ### Test Step
 Set of as many Manifests wanted and at most one Assert and/or Delete. A Test Step could consist of only Manifests,
-only and Assert, or only one Delete
+only an Assert, or only a Delete
 
 ### Test Case
 Set of Test Steps. Test Steps are ordered alphabetically and grouped by their prefix, whicih is the starting
