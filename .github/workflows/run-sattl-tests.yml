@@ -15,6 +15,10 @@ jobs:
 
   build-and-push:
     needs: tests
+    if: |
+      always() &&
+      contains(needs.*.result, 'success') &&
+      !contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
