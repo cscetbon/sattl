@@ -16,7 +16,7 @@ jobs:
     - name: Run tests
       run: docker-compose run tests
 
-  build-and-push:
+  docker-images:
     needs: tests
     if: |
       always() &&
