@@ -3,11 +3,13 @@ on: push
 
 jobs:
   tests:
-    if: "${{ !startsWith(github.ref, 'refs/tags/') }}"
+    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
+    - name: Make it fail
+      run: exit 1
     - name: Copy test config
       run: cp .github/workflows/config.json.sample config.json
     - name: Run tests
