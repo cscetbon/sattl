@@ -17,7 +17,6 @@ jobs:
     needs: tests
     if: |
       always() &&
-      contains(needs.*.result, 'success') &&
       !contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
     steps:
