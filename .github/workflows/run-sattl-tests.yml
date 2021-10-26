@@ -8,8 +8,6 @@ jobs:
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
-    - name: Make it fail
-      run: exit 1
     - name: Copy test config
       run: cp .github/workflows/config.json.sample config.json
     - name: Run tests
