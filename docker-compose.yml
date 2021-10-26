@@ -12,7 +12,6 @@ services:
   tests:
     <<: *common
     volumes:
-    - ./ipython_config.py:/app/ipython_config.py
     - ./tests:/app/tests
 
   sattl:
