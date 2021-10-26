@@ -12,7 +12,7 @@ jobs:
       run: cp .github/workflows/config.json.sample config.json
     - uses: KengoTODA/actions-setup-docker-compose@main
       with:
-        version: 'v2.0.1'
+        version: v2.0.1
     - name: Run tests
       run: docker-compose run tests
 
@@ -36,7 +36,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
     - uses: KengoTODA/actions-setup-docker-compose@main
       with:
-        version: 'v2.0.1'
+        version: v2.0.1
     - name: Build, tag, and push image to Amazon ECR
       env:
         IMAGE: ${{ steps.login-ecr.outputs.registry }}/enrollment-systems/sattl
