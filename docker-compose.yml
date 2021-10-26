@@ -11,11 +11,11 @@ services:
     <<: *common
     volumes:
     - ./tests:/app/tests
-    build:
+    build: &build
       context: .
 
   sattl:
     <<: *common
     build:
-      context: .
+      <<: *build
       target: base
