@@ -4,6 +4,8 @@ x-common: &common
   volumes:
     - ./sattl:/app/sattl
     - ./config.json:/app/config.json:ro
+  build:
+    context: .
 
 services:
 
@@ -11,11 +13,8 @@ services:
     <<: *common
     volumes:
     - ./tests:/app/tests
-    build: &build
-      context: .
 
   sattl:
     <<: *common
     build:
-      <<: *build
       target: base
