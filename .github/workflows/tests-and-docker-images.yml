@@ -1,0 +1,54 @@
+name: SATTL
+on: push
+
+jobs:
+  tests:
+    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Copy test config
+      run: cp .github/workflows/config.json.sample config.json
+    - uses: KengoTODA/actions-setup-docker-compose@main
+      with:
+        version: v2.0.1
+    - name: Run tests
+      run: docker-compose run tests
+
+  docker-images:
+    needs: tests
+    if: |
+      always() &&
+      !contains(needs.*.result, 'failure')
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    - uses: KengoTODA/actions-setup-docker-compose@main
+      with:
+        version: v2.0.1
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        IMAGE: ${{ steps.login-ecr.outputs.registry }}/enrollment-systems/sattl
+      run: |
+        TAG=${GITHUB_REF##*/}
+        docker-compose build sattl
+        docker tag sattl_sattl $IMAGE:$TAG
+        docker push $IMAGE:$TAG
+    - name: Tag image as prod and push it to Amazon ECR
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      env:
+        IMAGE: ${{ steps.login-ecr.outputs.registry }}/enrollment-systems/sattl
+      run: |
+        docker tag sattl_sattl $IMAGE:prod
+        docker push $IMAGE:prod
