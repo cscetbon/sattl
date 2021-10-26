@@ -4,18 +4,18 @@ x-common: &common
   volumes:
     - ./sattl:/app/sattl
     - ./config.json:/app/config.json:ro
+  build:
+    context: .
 
 services:
-  sattl:
-    <<: *common
-    build:
-      context: ./
-      target: base
 
   tests:
     <<: *common
     volumes:
     - ./ipython_config.py:/app/ipython_config.py
     - ./tests:/app/tests
+
+  sattl:
+    <<: *common
     build:
-      context: ./
+      target: base
