@@ -65,11 +65,11 @@ def test_test_case_skips_non_yaml_files():
     with patch('os.listdir', return_value=files), \
          patch('os.path.isfile', lambda f: f != "folder"), \
          patch('sattl.test_case.get_sf_connection'):
-        test_case = TestCase(path="/does/exists", domain="fake", timeout=12)
+        test_case = TestCase(path="/folder/does-exists", domain="fake", timeout=12)
         test_case.setup()
 
     assert test_case.content and "00" in test_case.content.keys()
     test_step = test_case.content["00"]
     assert test_step.assertion is None
     assert test_step.delete is None
-    assert test_step.manifests == ["/does/exists/00-pa-account-case.yaml"]
+    assert test_step.manifests == ["/folder/does-exists/00-pa-account-case.yaml"]
