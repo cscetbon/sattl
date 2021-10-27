@@ -13,7 +13,6 @@ ENTRYPOINT ["sattl"]
 FROM base AS tests
 
 RUN pip install --no-cache-dir -e '.[testing]'
-COPY tests tests
 COPY .github/workflows/config.json.sample config.json
 
 ENTRYPOINT ["pytest"]

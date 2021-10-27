@@ -1,6 +1,7 @@
 from click.testing import CliRunner
 from sattl.cli import run
-from mock import patch, call
+from mock import patch, call, MagicMock
+from logging import DEBUG
 
 runner = CliRunner()
 
@@ -55,3 +56,11 @@ def test_cli_is_prod_option():
             assert result.exit_code == 0
             mock_confirm.assert_called_once()
             mock_test_case.assert_called_once_with(domain="fake", is_sandbox=False, path='/folder', timeout=30)
+
+
+def test_cli_debug_option():
+    mock_logger = MagicMock()
+    with patch('sattl.cli.logger', mock_logger):
+        runner.invoke(run, ["--domain", "fake", "--is-prod", "--debug", "--test-case", "/folder"])
+        mock_logger.setLevel.assert_called_once_with(DEBUG)
+        mock_logger.handlers[0].setLevel.assert_called_once_with(DEBUG)
