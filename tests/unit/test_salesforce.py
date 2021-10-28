@@ -4,12 +4,13 @@ from requests.structures import CaseInsensitiveDict
 from httmock import urlmatch, HTTMock
 from collections import OrderedDict
 from mock import patch, Mock
+from http import HTTPStatus
 
 from simple_salesforce import SalesforceResourceNotFound
 from sattl.salesforce import SalesforceConnection, SalesforceObject, SalesforceRelation, SalesforceExternalID
 from sattl.config import Config
 
-SF_EXCEPTION_RESOURCE_NOT_FOUND = SalesforceResourceNotFound(*("",) * 4)
+SF_RESOURCE_NOT_FOUND = SalesforceResourceNotFound(*("",) * 4)
 
 
 @urlmatch(scheme='https', netloc='test.salesforce.com', path=r'/services/Soap/u/53.0', method='post')
@@ -96,8 +97,9 @@ def test_salesforce_invalid_relation(content, error_msg):
 
 def test_salesforce_object():
     sf_conn_mock = Mock()
-    sf_object = SalesforceObject(sf_conn_mock, dict(type="Account", externalID={"Slug__c": "XC-2"},
-                                              status="enrolled", location="Cannes"))
+    sf_object = SalesforceObject(sf_conn_mock,dict(
+        type="Account", externalID={"Slug__c": "XC-2"}, status="enrolled", location="Cannes"
+    ))
     assert sf_object.type == "Account"
     assert sf_object.sf_type == sf_conn_mock.Account
     assert sf_object.external_id == SalesforceExternalID("Slug__c", "XC-2")
@@ -111,6 +113,7 @@ def test_salesforce_refresh_relations(salesforce_connection):
     sf_object.relations = {"field": relation_mock}
     sf_object.refresh_relations()
     assert sf_object.content["field"] == relation_mock.get_id(sf_object.sf_connection)
+    assert not sf_object.relations
 
 
 def test_salesforce_load(salesforce_connection):
@@ -169,13 +172,18 @@ def test_salesforce_matches(first_name, diff, salesforce_connection):
 def test_salesforce_delete(salesforce_connection):
     sf_object = SalesforceObject(salesforce_connection, dict(type="Account", externalID={"Slug__c": "XC-2"}))
     with patch("simple_salesforce.api.SFType.get_by_custom_id", query_account):
-        with patch("simple_salesforce.api.SFType.delete", return_value=204):
+        with patch("simple_salesforce.api.SFType.delete", return_value=HTTPStatus.NO_CONTENT) as mock_delete:
             assert sf_object.delete() is True
-        with patch("simple_salesforce.api.SFType.delete", side_effect=SF_EXCEPTION_RESOURCE_NOT_FOUND):
-            assert sf_object.delete() is False
+            mock_delete.assert_called_once_with("0017A00000kkHm8QAE")
 
-    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=SF_EXCEPTION_RESOURCE_NOT_FOUND):
+        with patch("simple_salesforce.api.SFType.delete", side_effect=SF_RESOURCE_NOT_FOUND) as mock_delete:
+            assert sf_object.delete() is False
+            mock_delete.assert_called_once_with("0017A00000kkHm8QAE")
+
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=SF_RESOURCE_NOT_FOUND), \
+         patch("simple_salesforce.api.SFType.delete") as mock_delete:
         assert sf_object.delete() is False
+        mock_delete.assert_not_called()
 
 
 def test_salesforce_upsert(salesforce_connection):
@@ -193,9 +201,8 @@ def test_salesforce_upsert(salesforce_connection):
         University_Email__c: jdoe@test.com
     """
     sf_object = SalesforceObject(salesforce_connection, content=yaml.load(content, Loader=yaml.FullLoader))
-    with patch("simple_salesforce.api.SFType.get_by_custom_id", query_record_type):
-        with patch("simple_salesforce.api.SFType.upsert", return_value=204):
-            assert sf_object.upsert() is True
+    with patch("simple_salesforce.api.SFType.upsert", return_value=HTTPStatus.NO_CONTENT):
+        assert sf_object.upsert() is True
 
     assert sf_object.content == {
         'SIS_First_Name__c': 'Mug',
@@ -203,5 +210,37 @@ def test_salesforce_upsert(salesforce_connection):
         'University_Email__c': 'jdoe@test.com'
     }
 
-    with patch("simple_salesforce.api.SFType.upsert", side_effect=SF_EXCEPTION_RESOURCE_NOT_FOUND):
+    with patch("simple_salesforce.api.SFType.upsert", side_effect=SF_RESOURCE_NOT_FOUND):
         assert sf_object.upsert() is False
+
+
+def test_external_id_value_is_quoted_in_api_calls(salesforce_connection):
+    fields = dict(fieldA= "valueA", fieldB="valueB")
+    sf_object = SalesforceObject(salesforce_connection, dict(
+        type="Account", externalID={"Slug__c": "AA:BB/CCC"},
+        relations={"relationField": dict(type="RelationType", value="DD:EE/FFF")},
+        **fields
+    ))
+
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=query_record_type) as mock_relation_get_id:
+        sf_object.refresh_relations()
+
+    mock_relation_get_id.assert_called_once_with("value", "DD%3AEE%2FFFF")
+
+    with patch("simple_salesforce.api.SFType.upsert", return_value=HTTPStatus.NO_CONTENT) as mock_upsert:
+        sf_object.upsert()
+
+    quoted_slug = "AA%3ABB%2FCCC"
+    mock_upsert.assert_called_once_with(f"Slug__c/{quoted_slug}", dict(**fields, relationField="0123t000000FkA9AAK"))
+
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=query_account) as mock_get_id, \
+         patch("simple_salesforce.api.SFType.delete"):
+        sf_object.delete()
+
+    mock_get_id.assert_called_once_with("Slug__c", quoted_slug)
+
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=SF_RESOURCE_NOT_FOUND) as mock_get_id:
+        sf_object.load()
+
+    mock_get_id.assert_called_once_with("Slug__c", quoted_slug)
+

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-import yaml
 from typing import Dict, Any
+import yaml
+from urllib.parse import quote_plus
 from requests.structures import CaseInsensitiveDict
 
 from difflib import ndiff
@@ -48,7 +49,7 @@ class SalesforceRelation:
     def get_id(self, salesforce_connection: SalesforceConnection):
         key, value = self.external_id.field, self.external_id.value
         try:
-            return salesforce_connection.__getattr__(self.type).get_by_custom_id(key, value)[ID]
+            return salesforce_connection.__getattr__(self.type).get_by_custom_id(key, quote_plus(value))[ID]
         except SalesforceResourceNotFound:
             raise AttributeError(f'record of type {self.type} with {key} having the value "{value}" cannot be found')
 
@@ -115,7 +116,7 @@ class SalesforceObject:
     def load(self):
         try:
             logger.debug("Get object %s with %s = %s", self.type, self.external_id.field, self.external_id.value)
-            result = self.sf_type.get_by_custom_id(self.external_id.field, self.external_id.value)
+            result = self.sf_type.get_by_custom_id(self.external_id.field, quote_plus(self.external_id.value))
             del result["attributes"]
             self.content = CaseInsensitiveDict(result)
             return True
@@ -125,7 +126,7 @@ class SalesforceObject:
     def delete(self):
         try:
             logger.debug("Delete object %s with %s = %s", self.type, self.external_id.field, self.external_id.value)
-            result = self.sf_type.get_by_custom_id(self.external_id.field, self.external_id.value)
+            result = self.sf_type.get_by_custom_id(self.external_id.field, quote_plus(self.external_id.value))
             self.sf_type.delete(result[ID])
             return True
         except SalesforceResourceNotFound:
@@ -138,7 +139,7 @@ class SalesforceObject:
             data = dict(self.content)
             logger.debug("Upsert object %s with %s = %s and content:\n%s",
                          self.type, self.external_id.field, self.external_id.value, data)
-            self.sf_type.upsert(f"{self.external_id.field}/{self.external_id.value}", data)
+            self.sf_type.upsert(f"{self.external_id.field}/{quote_plus(self.external_id.value)}", data)
             return True
         except SalesforceResourceNotFound:
             pass
