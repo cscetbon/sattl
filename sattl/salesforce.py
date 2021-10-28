@@ -16,7 +16,7 @@ TYPE = "type"
 
 
 class SalesforceConnection(Salesforce):
-    ops = dict(version="53.0")
+    opts = dict(version="53.0")
 
     def __init__(self, config: Config):
         self.config = config
@@ -30,6 +30,9 @@ class SalesforceExternalID:
     field: str
     value: Any
 
+    def as_dict(self):
+        return {self.field: self.value}
+
 
 class SalesforceRelation:
 
@@ -40,8 +43,7 @@ class SalesforceRelation:
         if len(_content) != 2 or TYPE not in _content:
             raise AttributeError("relation must have 2 keys with one being type and the other one an external ID")
         self.type = _content.pop(TYPE)
-        external_id_field = next(iter(_content))
-        self.external_id = SalesforceExternalID(field=external_id_field, value=_content[external_id_field])
+        self.external_id = SalesforceExternalID(*_content.popitem())
 
     def get_id(self, salesforce_connection: SalesforceConnection):
         key, value = self.external_id.field, self.external_id.value
@@ -71,12 +73,15 @@ class SalesforceObject:
         self.relations = {k: SalesforceRelation(v) for k, v in relations.items() if v}
         self.sf_connection = salesforce_connection
 
-        self.external_id = SalesforceExternalID(*list(_content.pop(EXTERNAL_ID).items())[0])
+        self.external_id = SalesforceExternalID(*dict(_content.pop(EXTERNAL_ID)).popitem())
         self.type = _content.pop(TYPE)
         self.content = CaseInsensitiveDict(_content)
 
     def __repr__(self):
         return str(self.original_content)
+
+    def __eq__(self, other):
+        return self.content == other.content
 
     def as_yaml_split_with_content(self, content: dict):
         return yaml.dump(dict(
