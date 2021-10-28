@@ -4,7 +4,6 @@ from mock import patch
 from sattl.salesforce import SalesforceRelation
 from sattl.salesforce.external_id import SalesforceExternalID
 from tests.unit.salesforce.common import query_account
-from tests.unit.conftest import salesforce_connection
 
 
 def test_salesforce_valid_relation(salesforce_connection):
