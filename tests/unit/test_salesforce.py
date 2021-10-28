@@ -233,8 +233,7 @@ def test_external_id_value_is_quoted_in_api_calls(salesforce_connection):
     quoted_slug = "AA%3ABB%2FCCC"
     mock_upsert.assert_called_once_with(f"Slug__c/{quoted_slug}", dict(**fields, relationField="0123t000000FkA9AAK"))
 
-    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=query_account) as mock_get_id, \
-         patch("simple_salesforce.api.SFType.delete"):
+    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=SF_RESOURCE_NOT_FOUND) as mock_get_id:
         sf_object.delete()
 
     mock_get_id.assert_called_once_with("Slug__c", quoted_slug)
