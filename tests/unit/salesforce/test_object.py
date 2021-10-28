@@ -123,14 +123,13 @@ def get_account_sf_object(salesforce_connection):
     return SalesforceObject(salesforce_connection, content=yaml.load(content, Loader=yaml.FullLoader))
 
 
-def test_salesforce_upsert_succeeds(salesforce_connection):
-    with patch("simple_salesforce.api.SFType.upsert", return_value=HTTPStatus.NO_CONTENT):
-        assert get_account_sf_object(salesforce_connection).upsert() is True
-
-
-def test_salesforce_upsert_fails(salesforce_connection):
-    with patch("simple_salesforce.api.SFType.upsert", side_effect=SF_RESOURCE_NOT_FOUND):
-        assert get_account_sf_object(salesforce_connection).upsert() is False
+@pytest.mark.parametrize('side_effect, has_succeeded', [
+    (lambda _, __: HTTPStatus.NO_CONTENT, True),
+    (SF_RESOURCE_NOT_FOUND, False),
+])
+def test_salesforce_upsert(salesforce_connection, side_effect, has_succeeded):
+    with patch("simple_salesforce.api.SFType.upsert", side_effect=side_effect):
+        assert get_account_sf_object(salesforce_connection).upsert() is has_succeeded
 
 
 def test_get_by_custom_id_uses_quoted_values(salesforce_connection):
