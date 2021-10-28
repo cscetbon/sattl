@@ -143,7 +143,7 @@ def test_get_by_custom_id_uses_quoted_values(salesforce_connection):
     mock_get_id.assert_has_calls([call("value", "DD%3AEE%2FFFF"), call("Slug__c", "AA%3ABB%2FCCC")])
 
 
-def test_get_by_custom_id_uses_quoted_values(salesforce_connection):
+def test_api_delete_uses_quoted_values(salesforce_connection):
     sf_object = get_account_sf_object(salesforce_connection)
 
     with patch("simple_salesforce.api.SFType.delete", side_effect=SF_RESOURCE_NOT_FOUND) as mock_delete:
@@ -152,7 +152,7 @@ def test_get_by_custom_id_uses_quoted_values(salesforce_connection):
     mock_delete.assert_called_once_with("Slug__c/AA%3ABB%2FCCC")
 
 
-def test_get_by_custom_id_uses_quoted_values(salesforce_connection):
+def test_api_upsert_uses_quoted_values(salesforce_connection):
     sf_object = get_account_sf_object(salesforce_connection)
 
     with patch("simple_salesforce.api.SFType.upsert", return_value=HTTPStatus.NO_CONTENT) as mock_upsert:
