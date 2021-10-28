@@ -1,10 +1,10 @@
-from os import getenv
+from dataclasses import dataclass, field
 
 import yaml
 from simple_salesforce import Salesforce, SalesforceResourceNotFound
 from sattl.config import Config
 from requests.structures import CaseInsensitiveDict
-from typing import Dict
+from typing import Dict, Any
 from difflib import ndiff
 from sattl.logger import logger
 
@@ -24,20 +24,10 @@ class SalesforceConnection(Salesforce):
         super().__init__(username=config.sf_username, password=config.sf_password, security_token="", **opts)
 
 
+@dataclass
 class SalesforceExternalID:
-
-    def __init__(self, field, value):
-        self.field = field
-        self.value = value
-
-    def __eq__(self, other):
-        return self.field == other.field and self.value == other.value
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(field={self.field}, value={self.value})"
-
-    def as_dict(self):
-        return {self.field: self.value}
+    field: str
+    value: Any
 
 
 class SalesforceRelation:
