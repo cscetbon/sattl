@@ -3,7 +3,7 @@ import yaml
 from requests.structures import CaseInsensitiveDict
 from httmock import urlmatch, HTTMock
 from collections import OrderedDict
-from mock import patch, Mock
+from mock import patch, Mock, call
 from http import HTTPStatus
 
 from simple_salesforce import SalesforceResourceNotFound
@@ -235,11 +235,7 @@ def test_external_id_value_is_quoted_in_api_calls(salesforce_connection):
 
     with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=SF_RESOURCE_NOT_FOUND) as mock_get_id:
         sf_object.delete()
-
-    mock_get_id.assert_called_once_with("Slug__c", quoted_slug)
-
-    with patch("simple_salesforce.api.SFType.get_by_custom_id", side_effect=SF_RESOURCE_NOT_FOUND) as mock_get_id:
         sf_object.load()
 
-    mock_get_id.assert_called_once_with("Slug__c", quoted_slug)
+    mock_get_id.assert_has_calls([call("Slug__c", quoted_slug)]*2)
 
