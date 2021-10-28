@@ -1,57 +1,14 @@
-from dataclasses import dataclass
-from typing import Dict, Any
-import yaml
-from urllib.parse import quote_plus
-from requests.structures import CaseInsensitiveDict
-
 from difflib import ndiff
-from simple_salesforce import Salesforce, SalesforceResourceNotFound
 
-from sattl.config import Config
+import yaml
+from requests.structures import CaseInsensitiveDict
+from simple_salesforce import SalesforceResourceNotFound
+
 from sattl.logger import logger
-
-ID = "Id"
-EXTERNAL_ID = "externalId"
-RELATIONS = "relations"
-TYPE = "type"
-
-
-class SalesforceConnection(Salesforce):
-    opts = dict(version="53.0")
-
-    def __init__(self, config: Config):
-        self.config = config
-        if config.is_sandbox:
-            self.opts["domain"] = "test"
-        super().__init__(username=config.sf_username, password=config.sf_password, security_token="", **self.opts)
-
-
-@dataclass
-class SalesforceExternalID:
-    field: str
-    value: Any
-
-    def as_dict(self):
-        return {self.field: self.value}
-
-
-class SalesforceRelation:
-
-    def __init__(self, content: Dict):
-        if not content:
-            raise AttributeError("content used to initialize SalesforceRelation can't be empty")
-        _content = CaseInsensitiveDict(content)
-        if len(_content) != 2 or TYPE not in _content:
-            raise AttributeError("relation must have 2 keys with one being type and the other one an external ID")
-        self.type = _content.pop(TYPE)
-        self.external_id = SalesforceExternalID(*_content.popitem())
-
-    def get_id(self, salesforce_connection: SalesforceConnection):
-        key, value = self.external_id.field, self.external_id.value
-        try:
-            return salesforce_connection.__getattr__(self.type).get_by_custom_id(key, quote_plus(value))[ID]
-        except SalesforceResourceNotFound:
-            raise AttributeError(f'record of type {self.type} with {key} having the value "{value}" cannot be found')
+from sattl.salesforce.constants import ID, EXTERNAL_ID, RELATIONS, TYPE
+from sattl.salesforce.connection import SalesforceConnection
+from sattl.salesforce.external_id import SalesforceExternalID
+from sattl.salesforce.relation import SalesforceRelation
 
 
 class SalesforceObject:
@@ -116,8 +73,9 @@ class SalesforceObject:
     def load(self):
         try:
             logger.debug("Get object %s with %s = %s", self.type, self.external_id.field, self.external_id.value)
-            result = self.sf_type.get_by_custom_id(self.external_id.field, quote_plus(self.external_id.value))
-            del result["attributes"]
+            result = self.sf_type.get_by_custom_id(self.external_id.field, self.external_id.quoted_value)
+            for field in ["attributes", self.external_id.field]:
+                result.pop(field, None)
             self.content = CaseInsensitiveDict(result)
             return True
         except SalesforceResourceNotFound:
@@ -126,8 +84,7 @@ class SalesforceObject:
     def delete(self):
         try:
             logger.debug("Delete object %s with %s = %s", self.type, self.external_id.field, self.external_id.value)
-            result = self.sf_type.get_by_custom_id(self.external_id.field, quote_plus(self.external_id.value))
-            self.sf_type.delete(result[ID])
+            self.sf_type.delete(f"{self.external_id.field}/{self.external_id.quoted_value}")
             return True
         except SalesforceResourceNotFound:
             pass
@@ -139,7 +96,7 @@ class SalesforceObject:
             data = dict(self.content)
             logger.debug("Upsert object %s with %s = %s and content:\n%s",
                          self.type, self.external_id.field, self.external_id.value, data)
-            self.sf_type.upsert(f"{self.external_id.field}/{quote_plus(self.external_id.value)}", data)
+            self.sf_type.upsert(f"{self.external_id.field}/{self.external_id.quoted_value}", data)
             return True
         except SalesforceResourceNotFound:
             pass
@@ -148,7 +105,3 @@ class SalesforceObject:
     @property
     def sf_type(self):
         return self.sf_connection.__getattr__(self.type)
-
-
-def get_sf_connection(is_sandbox: bool, domain: str):
-    return SalesforceConnection(Config(is_sandbox, domain))
