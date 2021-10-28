@@ -1,11 +1,12 @@
-from os import getenv
-
+from dataclasses import dataclass
 import yaml
-from simple_salesforce import Salesforce, SalesforceResourceNotFound
-from sattl.config import Config
+from typing import Dict, Any
 from requests.structures import CaseInsensitiveDict
-from typing import Dict
+
 from difflib import ndiff
+from simple_salesforce import Salesforce, SalesforceResourceNotFound
+
+from sattl.config import Config
 from sattl.logger import logger
 
 ID = "Id"
@@ -15,26 +16,19 @@ TYPE = "type"
 
 
 class SalesforceConnection(Salesforce):
+    opts = dict(version="53.0")
 
     def __init__(self, config: Config):
         self.config = config
-        opts = dict(version="53.0")
         if config.is_sandbox:
-            opts["domain"] = "test"
-        super().__init__(username=config.sf_username, password=config.sf_password, security_token="", **opts)
+            self.opts["domain"] = "test"
+        super().__init__(username=config.sf_username, password=config.sf_password, security_token="", **self.opts)
 
 
+@dataclass
 class SalesforceExternalID:
-
-    def __init__(self, field, value):
-        self.field = field
-        self.value = value
-
-    def __eq__(self, other):
-        return self.field == other.field and self.value == other.value
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(field={self.field}, value={self.value})"
+    field: str
+    value: Any
 
     def as_dict(self):
         return {self.field: self.value}
@@ -49,8 +43,7 @@ class SalesforceRelation:
         if len(_content) != 2 or TYPE not in _content:
             raise AttributeError("relation must have 2 keys with one being type and the other one an external ID")
         self.type = _content.pop(TYPE)
-        external_id_field = next(iter(_content))
-        self.external_id = SalesforceExternalID(external_id_field, _content[external_id_field])
+        self.external_id = SalesforceExternalID(*_content.popitem())
 
     def get_id(self, salesforce_connection: SalesforceConnection):
         key, value = self.external_id.field, self.external_id.value
@@ -78,8 +71,9 @@ class SalesforceObject:
                 raise AttributeError("relation must have 2 keys with one being type and the other one and external ID")
 
         self.relations = {k: SalesforceRelation(v) for k, v in relations.items() if v}
-        self.external_id = SalesforceExternalID(*list(_content.pop(EXTERNAL_ID).items())[0])
         self.sf_connection = salesforce_connection
+
+        self.external_id = SalesforceExternalID(*dict(_content.pop(EXTERNAL_ID)).popitem())
         self.type = _content.pop(TYPE)
         self.content = CaseInsensitiveDict(_content)
 
