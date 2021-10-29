@@ -27,7 +27,7 @@ def _get_files(path):
 @dataclass
 class TestCase:
     path: str
-    domain: str
+    sf_org: str
     timeout: int
     is_sandbox: bool = True
     content: Dict[str, TestStep] = field(default_factory=OrderedDict)
@@ -42,7 +42,7 @@ class TestCase:
                 continue
             step = self.content.setdefault(
                 prefix, TestStep(prefix, assert_timeout=self.timeout,
-                                 sf_connection=get_sf_connection(self.is_sandbox, self.domain))
+                                 sf_connection=get_sf_connection(self.is_sandbox, self.sf_org))
             )
             if "assert" in filename.lower():
                 step.set_assertion(filename)

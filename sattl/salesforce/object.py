@@ -1,7 +1,7 @@
-from difflib import ndiff
-
 import yaml
 from requests.structures import CaseInsensitiveDict
+
+from difflib import ndiff
 from simple_salesforce import SalesforceResourceNotFound
 
 from sattl.logger import logger

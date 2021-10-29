@@ -28,6 +28,6 @@ def salesforce_login(*_):
 
 @pytest.fixture
 def salesforce_connection():
-    config = Config(is_sandbox=True, domain="dom-ain")
+    config = Config(is_sandbox=True, sf_org="sf-org")
     with HTTMock(salesforce_login):
         return SalesforceConnection(config)

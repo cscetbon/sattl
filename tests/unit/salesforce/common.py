@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from httmock import urlmatch
+
 
 def query_account(*_):
     return OrderedDict([('attributes',
@@ -16,3 +18,13 @@ def query_account(*_):
                     ('SIS_Email__c', None),
                     ('SIS_First_Name__c', 'Mug'),
                     ('SIS_Last_Name__c', 'Coffee')])
+
+
+@urlmatch(scheme='https', netloc='test.salesforce.com', path=r'/services/Soap/u/53.0', method='post')
+def salesforce_login(*_):
+    return {'status_code': 200, 'content': """
+        <root>
+        <sessionId>00D7A0000009g88!AQQAQEev5W85xCXM0urY0oRblZuM6</sessionId>
+        <serverUrl>https://2u-sf-org-pastg.my.salesforce.com</serverUrl>
+        </root>
+    """}

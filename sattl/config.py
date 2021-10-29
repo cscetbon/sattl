@@ -14,17 +14,17 @@ def _read_from_config_file():
 
 class Config:
 
-    def __init__(self, is_sandbox, domain):
+    def __init__(self, is_sandbox, sf_org):
         self._is_sandbox = is_sandbox
-        self._domain = domain
+        self._sf_org = sf_org
         config = _read_from_config_file()
-        if self.domain not in config:
-            raise Exception(f"domain {self.domain} can't be found in configuration file")
-        self._config = config[self.domain]
+        if self.sf_org not in config:
+            raise Exception(f"sf-org {self.sf_org} can't be found in configuration file")
+        self._config = config[self.sf_org]
 
     @property
-    def domain(self):
-        return self._domain
+    def sf_org(self):
+        return self._sf_org
 
     @property
     def is_sandbox(self):

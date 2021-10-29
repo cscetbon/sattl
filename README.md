@@ -8,7 +8,7 @@
 **SA**lesforce **T**esting **T**oo**L** or Sattl is a CLI that runs tests from a provided folder.
 
 ```shell
-sattl --timeout 900 --domain my-domain your/sattl_tests/location/
+sattl --timeout 900 --sf-org my-org your/sattl_tests/location/
 ```
 In the command above, we run all test cases found at `your/sattl_tests/location/`. Here is what Sattl is going to do:
 - for each Test Case found, meaning folder, Sattl will list all files in it and group them by their prefix to create
@@ -21,7 +21,7 @@ Test Steps
 
 We can also run only a specific Test Case by using a command like
 ```shell
-sattl --domain my-domain --test-case your/sattl_tests/your-test-case/
+sattl --sf-org my-org --test-case your/sattl_tests/your-test-case/
 ```
 
 # Docker
@@ -48,7 +48,7 @@ tests/unit/test_test_step.py ..........                                         
 ## Using Satll locally
 Using docker-compose we can use Sattl CLI
 ```shell
-$ docker-compose run -v ~/Downloads/sattl-tests:/sattl-tests sattl --domain corp-pmx --timeout 10 --test-case /sattl-tests/
+$ docker-compose run -v ~/Downloads/sattl-tests:/sattl-tests sattl --sf-org corp-pmx --timeout 10 --test-case /sattl-tests/
 {"timestamp": "2021-10-21T16:29:17.385911Z", "level": "INFO", "name": "root", "message": "Running step sattl"}
 {"timestamp": "2021-10-21T16:29:17.386049Z", "level": "INFO", "name": "root", "message": "Applying manifest /sattl-tests/00-create-account.yaml"}
 {"timestamp": "2021-10-21T16:29:18.261114Z", "level": "INFO", "name": "root", "message": "Asserting objects in /sattl-tests/00-assert.yaml"}
@@ -76,12 +76,16 @@ YAML file containing one or more objects that must exist and match in Salesforce
 YAML file containing one or more objects that must be deleted in Salesforce
 
 ### Test Step
-Set of as many Manifests wanted and at most one Assert and/or Delete. A Test Step could consist of only Manifests,
-only an Assert, or only a Delete
+A Test Step consists of one or more TestStepElements (Manifest, Assert, Delete). Some examples of a Test Step:
+ - one Delete
+ - one Manifest, one Assert, one Delete
+ - three Manifests and an Assert
+
+In a Test Step where there are multiple types of TestStepElements, the order that they are run is as follows: Manifest(s), Assert, Delete.
 
 ### Test Case
-Set of Test Steps. Test Steps are ordered alphabetically and grouped by their prefix, whicih is the starting
-string/number before the character -
+Set of Test Steps. Test Steps are ordered alphabetically and grouped by their prefix, which is the starting
+string/number before the character `-`
 
 # Example of a Test Case
 
@@ -128,7 +132,7 @@ externalID:
 ---
 type: Account
 externalID:
-  UUID__c: fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
+  Namespace_University_ID__c: 1800008:SC
 ---
 type: PlatformAccount
 externalID:
@@ -140,7 +144,7 @@ Sattl deletes the following objects sequentially:
 - Enrollment__c object with Slug__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302:MT-105A-03:HOLDING:2020/1_05
 - Section__c object with Slug__c = MT-105A-03:HOLDING:2020/1_05
 - Course__c object with Slug__c = MT-105A-03
-- Account object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
+- Account object with Namespace_University_ID__c = 1800008:SC
 - PlatformAccount object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
 
 ## Test Step 01
@@ -151,7 +155,7 @@ Sattl deletes the following objects sequentially:
 ```yaml
 type: Account
 externalID:
-  UUID__c: aaa52d9a-520c-4c7e-bbbb-3b6fde10b302
+  Namespace_University_ID__c: 1800008:SC
 sis_first_name__c: John
 sis_last_name__c: Doe
 University_Email__c: jdoe@test.com
@@ -204,7 +208,7 @@ relations:
     Slug__c: MT-105A-03:HOLDING:2020/1_05
   Student__c:
     type: Account
-    UUID__c: aaa52d9a-520c-4c7e-bbbb-3b6fde10b302
+    Namespace_University_ID__c: 1800008:SC
 ```
 
 Sattl creates Enrollment__c object with Slug__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302:MT-105A-03:HOLDING:2020/1_05
@@ -254,7 +258,7 @@ fields.
 ```yaml
 type: Account
 externalID:
-  UUID__c: fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
+  Namespace_University_ID__c: 1800008:SC
 sis_first_name__c: John
 sis_last_name__c: Smith
 University_Email__c: smith+patest8@2u.com
@@ -269,14 +273,13 @@ externalID:
 Platform_Host__c: a2z7A000000MGr1QAG
 Status__c: Active
 University_ID__c: 1800008
-Namespace_University_ID__c: 1800008-UD
 relations:
   recordTypeID:
     type: RecordType
     name: SIS Student
     Student__c:
         type: Account
-        UUID__c: fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
+        Namespace_University_ID__c: 1800008:SC
 ```
 
 Sattl asserts Account object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302 exists and all its fields match
@@ -294,7 +297,7 @@ on the CLI command is exceeded. In that case Sattl prints an error which is typi
 the object in the Assert file and in Salesforce:
 
 ```
-$ sattl --domain corp-pmx --timeout 10 --test-case ~/Downloads/sattl-tests/
+$ sattl --sf-org corp-pmx --timeout 10 --test-case ~/Downloads/sattl-tests/
 {"timestamp": "2021-10-20T20:39:25.278502Z", "level": "INFO", "name": "root", "message": "Running step /Users/cscetbon/Downloads/sattl"}
 {"timestamp": "2021-10-20T20:39:25.278782Z", "level": "INFO", "name": "root", "message": "Applying manifest /Users/cscetbon/Downloads/sattl-tests/00-create-account.yaml"}
 {"timestamp": "2021-10-20T20:39:34.075534Z", "level": "INFO", "name": "root", "message": "Asserting objects in /Users/cscetbon/Downloads/sattl-tests/00-assert.yaml"}
