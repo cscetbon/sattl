@@ -81,7 +81,7 @@ A Test Step consists of one or more TestStepElements (Manifest, Assert, Delete).
  - one Manifest, one Assert, one Delete
  - three Manifests and an Assert
 
-In a Test Step where there are multiple types of TestStepElements, the order that they are run is as follows: Manifest, Assert, Delete.
+In a Test Step where there are multiple types of TestStepElements, the order that they are run is as follows: Manifest(s), Assert, Delete.
 
 ### Test Case
 Set of Test Steps. Test Steps are ordered alphabetically and grouped by their prefix, which is the starting
