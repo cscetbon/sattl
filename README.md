@@ -76,12 +76,12 @@ YAML file containing one or more objects that must exist and match in Salesforce
 YAML file containing one or more objects that must be deleted in Salesforce
 
 ### Test Step
-A Test Step consists of one or more Elements (Manifest, Assert, Delete). Some examples of a Test Step:
+A Test Step consists of one or more TestStepElements (Manifest, Assert, Delete). Some examples of a Test Step:
  - one Delete
  - one Manifest, one Assert, one Delete
  - three Manifests and an Assert
 
-In a Test Step where there are multiple types of Elements, the order that they are run is as follows: Manifest, Assert, Delete.
+In a Test Step where there are multiple types of TestStepElements, the order that they are run is as follows: Manifest, Assert, Delete.
 
 ### Test Case
 Set of Test Steps. Test Steps are ordered alphabetically and grouped by their prefix, which is the starting
