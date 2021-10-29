@@ -5,7 +5,7 @@ from mock import patch
 
 def test_test_case_empty_folder():
     with pytest.raises(AttributeError) as exc, patch('os.listdir', return_value=[]):
-        TestCase(path="/empty/folder", domain="fake", timeout=7).setup()
+        TestCase(path="/empty/folder", sf_org="fake", timeout=7).setup()
     assert str(exc.value) == "path /empty/folder is empty"
 
 
@@ -32,7 +32,7 @@ def test_test_case():
          patch('os.path.isfile', lambda f: f != "folder"), \
          patch('sattl.test_case.get_sf_connection'), \
          patch('sattl.test_case.TestStep', new=FakeTestStep):
-        test_case = TestCase(path="/does/exists", domain="fake", timeout=12)
+        test_case = TestCase(path="/does/exists", sf_org="fake", timeout=12)
         test_case.setup()
         test_case.run()
 
@@ -65,7 +65,7 @@ def test_test_case_skips_non_yaml_files():
     with patch('os.listdir', return_value=files), \
          patch('os.path.isfile', lambda f: f != "folder"), \
          patch('sattl.test_case.get_sf_connection'):
-        test_case = TestCase(path="/does/exists", domain="fake", timeout=12)
+        test_case = TestCase(path="/does/exists", sf_org="fake", timeout=12)
         test_case.setup()
 
     assert test_case.content and "00" in test_case.content.keys()
@@ -79,7 +79,7 @@ def test_test_case_step_id_is_correct_when_path_includes_a_dash():
     with patch('os.listdir', return_value=["01-assert.yaml"]), \
          patch('os.path.isfile', lambda f: f), \
          patch('sattl.test_case.get_sf_connection'):
-        test_case = TestCase(path="/folder/does-exists", domain="fake", timeout=12)
+        test_case = TestCase(path="/folder/does-exists", sf_org="fake", timeout=12)
         test_case.setup()
 
     assert test_case.content and ["01"] == list(test_case.content.keys())

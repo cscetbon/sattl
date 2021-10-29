@@ -8,7 +8,7 @@
 **SA**lesforce **T**esting **T**oo**L** or Sattl is a CLI that runs tests from a provided folder.
 
 ```shell
-sattl --timeout 900 --domain my-domain your/sattl_tests/location/
+sattl --timeout 900 --sf-org my-org your/sattl_tests/location/
 ```
 In the command above, we run all test cases found at `your/sattl_tests/location/`. Here is what Sattl is going to do:
 - for each Test Case found, meaning folder, Sattl will list all files in it and group them by their prefix to create
@@ -21,7 +21,7 @@ Test Steps
 
 We can also run only a specific Test Case by using a command like
 ```shell
-sattl --domain my-domain --test-case your/sattl_tests/your-test-case/
+sattl --sf-org my-org --test-case your/sattl_tests/your-test-case/
 ```
 
 # Docker
@@ -48,7 +48,7 @@ tests/unit/test_test_step.py ..........                                         
 ## Using Satll locally
 Using docker-compose we can use Sattl CLI
 ```shell
-$ docker-compose run -v ~/Downloads/sattl-tests:/sattl-tests sattl --domain corp-pmx --timeout 10 --test-case /sattl-tests/
+$ docker-compose run -v ~/Downloads/sattl-tests:/sattl-tests sattl --sf-org corp-pmx --timeout 10 --test-case /sattl-tests/
 {"timestamp": "2021-10-21T16:29:17.385911Z", "level": "INFO", "name": "root", "message": "Running step sattl"}
 {"timestamp": "2021-10-21T16:29:17.386049Z", "level": "INFO", "name": "root", "message": "Applying manifest /sattl-tests/00-create-account.yaml"}
 {"timestamp": "2021-10-21T16:29:18.261114Z", "level": "INFO", "name": "root", "message": "Asserting objects in /sattl-tests/00-assert.yaml"}
@@ -294,7 +294,7 @@ on the CLI command is exceeded. In that case Sattl prints an error which is typi
 the object in the Assert file and in Salesforce:
 
 ```
-$ sattl --domain corp-pmx --timeout 10 --test-case ~/Downloads/sattl-tests/
+$ sattl --sf-org corp-pmx --timeout 10 --test-case ~/Downloads/sattl-tests/
 {"timestamp": "2021-10-20T20:39:25.278502Z", "level": "INFO", "name": "root", "message": "Running step /Users/cscetbon/Downloads/sattl"}
 {"timestamp": "2021-10-20T20:39:25.278782Z", "level": "INFO", "name": "root", "message": "Applying manifest /Users/cscetbon/Downloads/sattl-tests/00-create-account.yaml"}
 {"timestamp": "2021-10-20T20:39:34.075534Z", "level": "INFO", "name": "root", "message": "Asserting objects in /Users/cscetbon/Downloads/sattl-tests/00-assert.yaml"}

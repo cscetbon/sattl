@@ -17,14 +17,14 @@ def salesforce_login(*_):
     return {'status_code': 200, 'content': """
         <root>
         <sessionId>00D7A0000009g88!AQQAQEev5W85xCXM0urY0oRblZuM6</sessionId>
-        <serverUrl>https://2u-dom-ain-pastg.my.salesforce.com</serverUrl>
+        <serverUrl>https://2u-sf-org-pastg.my.salesforce.com</serverUrl>
         </root>
     """}
 
 
 @pytest.fixture
 def salesforce_connection():
-    config = Config(is_sandbox=True, domain="dom-ain")
+    config = Config(is_sandbox=True, sf_org="sf-org")
     with HTTMock(salesforce_login):
         return SalesforceConnection(config)
 
@@ -58,14 +58,19 @@ def query_record_type(*_):
 def test_salesforce_connection(salesforce_connection):
     assert salesforce_connection.sf_version == "53.0"
     assert salesforce_connection.domain == "test"
-    assert salesforce_connection.sf_instance == "2u-dom-ain-pastg.my.salesforce.com"
+    assert salesforce_connection.sf_instance == "2u-sf-org-pastg.my.salesforce.com"
     assert salesforce_connection.auth_type == "password"
 
 
-def test_salesforce_connection_instantiation(salesforce_connection):
-    with patch('sattl.salesforce.Salesforce.__init__') as mock_salesforce:
-        SalesforceConnection(salesforce_connection.config)
-    mock_salesforce.assert_called_with(domain='test', password='PASSWORD', security_token='', username='USERNAME',
+@pytest.mark.parametrize('is_sandbox, opts', [
+    (True, {"domain": "test"}),
+    (False, {}),
+])
+def test_salesforce_connection_instantiation(is_sandbox, opts):
+    with HTTMock(salesforce_login), patch('sattl.salesforce.Salesforce.__init__') as mock_salesforce:
+        config = Config(is_sandbox, sf_org="sf-org")
+        SalesforceConnection(config)
+    mock_salesforce.assert_called_with(**opts, password='PASSWORD', security_token='', username='USERNAME',
                                        version='53.0')
 
 
@@ -96,8 +101,9 @@ def test_salesforce_invalid_relation(content, error_msg):
 
 def test_salesforce_object():
     sf_conn_mock = Mock()
-    sf_object = SalesforceObject(sf_conn_mock, dict(type="Account", externalID={"Slug__c": "XC-2"},
-                                              status="enrolled", location="Cannes"))
+    sf_object = SalesforceObject(sf_conn_mock,
+                                 dict(type="Account", externalID={"Slug__c": "XC-2"},
+                                      status="enrolled", location="Cannes"))
     assert sf_object.type == "Account"
     assert sf_object.sf_type == sf_conn_mock.Account
     assert sf_object.external_id == SalesforceExternalID("Slug__c", "XC-2")
