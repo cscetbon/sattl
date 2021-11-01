@@ -14,13 +14,13 @@ def test_salesforce_connection(salesforce_connection):
     assert salesforce_connection.auth_type == "password"
 
 
-@pytest.mark.parametrize('is_sandbox, opts', [
-    (True, {"domain": "test"}),
-    (False, {}),
+@pytest.mark.parametrize('is_prod, opts', [
+    (False, {"domain": "test"}),
+    (True, {}),
 ])
-def test_salesforce_connection_instantiation(is_sandbox, opts):
+def test_salesforce_connection_instantiation(is_prod, opts):
     with HTTMock(salesforce_login), patch('sattl.salesforce.connection.Salesforce.__init__') as mock_salesforce:
-        config = Config(is_sandbox, sf_org="sf-org")
+        config = Config(is_prod, sf_org="sf-org")
         SalesforceConnection(config)
     mock_salesforce.assert_called_with(**opts, password='PASSWORD', security_token='', username='USERNAME',
                                        version='53.0')

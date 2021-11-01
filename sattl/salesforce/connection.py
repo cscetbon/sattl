@@ -8,7 +8,7 @@ class SalesforceConnection(Salesforce):
     def __init__(self, config: Config):
         self.config = config
         self.opts = dict(version="53.0")
-        if config.is_prod:
+        if not config.is_prod:
             self.opts["domain"] = "test"
         super().__init__(username=config.sf_username, password=config.sf_password, security_token="", **self.opts)
 
