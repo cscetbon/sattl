@@ -22,7 +22,7 @@ def run(debug, sf_org, is_prod, timeout, test_case, path):
         click.confirm('You chose to run against prod, is that really what you want?', abort=True)
     test_case_dirs = [os.path.join(path, subdir) for subdir in os.listdir(path)] if not test_case else [path]
     for test_case_dir in test_case_dirs:
-        test_case = TestCase(path=test_case_dir, sf_org=sf_org, is_sandbox=not is_prod, timeout=timeout)
+        test_case = TestCase(path=test_case_dir, sf_org=sf_org, timeout=timeout, is_prod=is_prod)
         test_case.setup()
         test_case.run()
 

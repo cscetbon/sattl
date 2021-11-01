@@ -36,7 +36,7 @@ class TestCase:
     path: str
     sf_org: str
     timeout: int
-    is_sandbox: bool = True
+    is_prod: bool = False
     content: Dict[str, TestStep] = field(default_factory=OrderedDict)
 
     __test__ = False
@@ -49,7 +49,7 @@ class TestCase:
                     continue
                 step = self.content.setdefault(
                     prefix, TestStep(prefix, assert_timeout=self.timeout,
-                                     sf_connection=get_sf_connection(self.is_sandbox, self.sf_org))
+                                     sf_connection=get_sf_connection(self.is_prod, self.sf_org))
                 )
                 if "assert" in filename.lower():
                     step.set_assertion(filename)

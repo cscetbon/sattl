@@ -14,8 +14,8 @@ def _read_from_config_file():
 
 class Config:
 
-    def __init__(self, is_sandbox, sf_org):
-        self._is_sandbox = is_sandbox
+    def __init__(self, is_prod, sf_org):
+        self._is_prod = is_prod
         self._sf_org = sf_org
         config = _read_from_config_file()
         if self.sf_org not in config:
@@ -27,8 +27,8 @@ class Config:
         return self._sf_org
 
     @property
-    def is_sandbox(self):
-        return self._is_sandbox
+    def is_prod(self):
+        return self._is_prod
 
     @property
     def sf_username(self):
