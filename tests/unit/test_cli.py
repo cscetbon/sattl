@@ -26,7 +26,7 @@ def test_cli_no_test_case_option():
         result = runner.invoke(run, ["--sf-org", "fake", "/folder"])
         assert result.exit_code == 0
         assert mock_test_case.call_args_list == [
-            call(sf_org="fake", is_prod=False, path=f"/folder/{folder}", timeout=30) for folder in folders
+            call(sf_org="fake", is_prod=False, path=f"/folder/{folder}", timeout=60) for folder in folders
         ]
 
 
@@ -34,7 +34,7 @@ def test_cli_test_case_option():
     with patch('os.listdir', return_value=[]), patch('sattl.cli.TestCase') as mock_test_case:
         result = runner.invoke(run, ["--sf-org", "fake", "--test-case", "/folder"])
         assert result.exit_code == 0
-        mock_test_case.assert_called_once_with(sf_org="fake", is_prod=False, path='/folder', timeout=30)
+        mock_test_case.assert_called_once_with(sf_org="fake", is_prod=False, path='/folder', timeout=60)
 
 
 def test_cli_timeout_option():
@@ -55,7 +55,7 @@ def test_cli_is_prod_option():
             result = runner.invoke(run, ["--sf-org", "fake", "--is-prod", "--test-case", "/folder"])
             assert result.exit_code == 0
             mock_confirm.assert_called_once()
-            mock_test_case.assert_called_once_with(sf_org="fake", is_prod=True, path='/folder', timeout=30)
+            mock_test_case.assert_called_once_with(sf_org="fake", is_prod=True, path='/folder', timeout=60)
 
 
 def test_cli_debug_option():

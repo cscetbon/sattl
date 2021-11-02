@@ -9,7 +9,7 @@ from logging import DEBUG
 @click.option("--debug", is_flag=True)
 @click.option("--sf-org", required=True, type=str)
 @click.option("--is-prod", is_flag=True)
-@click.option("--timeout", default=30, type=int)
+@click.option("--timeout", default=60, type=int)
 @click.option("--test-case", is_flag=True)
 @click.argument("path", required=True, type=click.Path(readable=True))
 @click.version_option()
