@@ -14,7 +14,7 @@ def test_salesforce_valid_relation(salesforce_connection):
         assert sf_relation.get_id(salesforce_connection) == "0017A00000kkHm8QAE"
 
 
-@pytest.mark.parametrize('content,error_msg', [
+@pytest.mark.parametrize('content, error_msg', [
     (None, "content used to initialize SalesforceRelation can't be empty"),
     ({"Name": "Cyril"}, "relation must have 2 keys with one being type"),
     ({"Typo": "Contact", "Name": "Cyril"}, "relation must have 2 keys with one being type"),
