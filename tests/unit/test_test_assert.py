@@ -2,7 +2,7 @@ from sattl.test_step import TestAssert
 from sattl.salesforce import SalesforceObject
 
 import pytest
-from mock import patch, mock_open, MagicMock, Mock
+from mock import patch, mock_open, MagicMock, Mock, PropertyMock
 
 
 def test_assert_succeeds(yaml_with_five_sf_objects, sample_object_content):
@@ -30,7 +30,8 @@ def test_assert_fails_because_it_is_different(yaml_with_five_sf_objects, sample_
     sf_object = Mock()
     sf_object.differences.return_value = "expected_output"
     with pytest.raises(Exception) as exc, \
-         patch("sattl.test_step.TestStepElement.get_sf_objects_from_file", return_value=[sf_object]):
+         patch("sattl.test_step.TestStepElement.sf_objects", new_callable=PropertyMock) as mock_sf_objects:
+        mock_sf_objects.return_value = [sf_object]
         TestAssert("00-assert.yaml", sf_connection=MagicMock()).validate()
 
     sf_object.differences.assert_called_once_with(sf_object)
