@@ -1,8 +1,11 @@
-import os
 import re
+import os
+from os.path import basename
 from dataclasses import dataclass, field
 from typing import Dict
 from collections import OrderedDict
+from itertools import groupby
+
 from sattl.logger import logger
 from sattl.salesforce import get_sf_connection
 from sattl.test_step import TestStep
@@ -17,11 +20,15 @@ def _is_yaml_file(path, filename):
     return filename and RE_IS_YAML.search(filename) and os.path.isfile(os.path.join(path, filename))
 
 
-def _get_files(path):
+def _get_absolute_filenames(path):
     return [
         os.path.join(path, filename) for filename in sorted(os.listdir(path))
         if _is_yaml_file(path, filename) and DELIMITER in filename
     ]
+
+
+def _get_prefix(filename):
+    return basename(filename).split(DELIMITER)[0]
 
 
 @dataclass
@@ -29,30 +36,30 @@ class TestCase:
     path: str
     sf_org: str
     timeout: int
-    is_sandbox: bool = True
+    is_prod: bool = False
     content: Dict[str, TestStep] = field(default_factory=OrderedDict)
 
     __test__ = False
 
     def setup(self):
-        for filename in _get_files(self.path):
-            prefix = os.path.basename(filename).split(DELIMITER)[0]
-            if not prefix:
-                logger.warning(f"Prefix of file {filename} is empty")
-                continue
-            step = self.content.setdefault(
-                prefix, TestStep(prefix, assert_timeout=self.timeout,
-                                 sf_connection=get_sf_connection(self.is_sandbox, self.sf_org))
-            )
-            if "assert" in filename.lower():
-                step.set_assertion(filename)
-                continue
+        for prefix, filenames in groupby(_get_absolute_filenames(self.path), key=_get_prefix):
+            for filename in filenames:
+                if not prefix:
+                    logger.warning(f"Prefix of file {filename} is empty. Ignoring it")
+                    continue
+                step = self.content.setdefault(
+                    prefix, TestStep(prefix, assert_timeout=self.timeout,
+                                     sf_connection=get_sf_connection(self.is_prod, self.sf_org))
+                )
+                if "assert" in filename.lower():
+                    step.set_assertion(filename)
+                    continue
 
-            if "delete" in filename.lower():
-                step.set_delete(filename)
-                continue
+                if "delete" in filename.lower():
+                    step.set_delete(filename)
+                    continue
 
-            step.add_manifest(filename)
+                step.add_manifest(filename)
 
         if not self.content:
             raise AttributeError(f"path {self.path} is empty")
