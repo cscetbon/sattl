@@ -12,7 +12,7 @@ def sample_test_step():
     )
 
 
-def test_step_element_uses_cache():
+def test_step_element_caches_file_access():
     with patch("builtins.open", mock_open(read_data="")) as m_open:
         test_step_element = TestStepElement("00-assert-not-used.yaml", sf_connection=Mock())
         test_step_element.sf_objects == test_step_element.sf_objects
