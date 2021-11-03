@@ -46,7 +46,7 @@ class TestStep:
             TestDelete(self.delete, self.sf_connection).apply()
 
 
-@dataclass(eq=True, frozen=True)
+@dataclass(frozen=True)
 class TestStepElement:
     filename: str
     sf_connection: SalesforceConnection
