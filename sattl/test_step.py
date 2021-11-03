@@ -1,11 +1,12 @@
-from dataclasses import dataclass, field
+import yaml
 from typing import List
+from copy import copy
+from functools import lru_cache
+from dataclasses import dataclass, field
+
 from sattl.logger import logger
 from sattl.salesforce import SalesforceConnection, SalesforceObject
 from sattl.retry_with_timeout import RetryWithTimeout
-import yaml
-from copy import copy
-from functools import lru_cache
 
 
 @dataclass
