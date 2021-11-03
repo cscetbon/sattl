@@ -1,9 +1,7 @@
-from sattl.test_step import TestStep, TestManifest, TestAssert, TestDelete
-from sattl.retry_with_timeout import RetryWithTimeout
-
 import pytest
 from mock import patch, mock_open, Mock
-from functools import partial
+
+from sattl.test_step import TestStepElement, TestStep, TestManifest, TestAssert, TestDelete
 
 
 @pytest.fixture
@@ -12,6 +10,14 @@ def sample_test_step():
         prefix="00", assert_timeout=10, manifests=["00-pa-account-case.yaml", "00-pa-enrollment-case.yaml"],
         assertion="00-assert.yaml", delete="00-delete.yaml", sf_connection=Mock(),
     )
+
+
+def test_step_element_caches_file_access():
+    with patch("builtins.open", mock_open(read_data="")) as m_open:
+        test_step_element = TestStepElement("00-assert-not-used.yaml", sf_connection=Mock())
+        assert test_step_element.sf_objects == test_step_element.sf_objects
+
+    assert m_open.call_count == 1
 
 
 def test_step_fails_if_multiple_assertions(sample_test_step):
