@@ -5,6 +5,7 @@ from sattl.salesforce import SalesforceConnection, SalesforceObject
 from sattl.retry_with_timeout import RetryWithTimeout
 import yaml
 from copy import copy
+from functools import lru_cache
 
 
 @dataclass
@@ -45,13 +46,14 @@ class TestStep:
             TestDelete(self.delete, self.sf_connection).apply()
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class TestStepElement:
     filename: str
     sf_connection: SalesforceConnection
     __test__ = False
 
     @property
+    @lru_cache(maxsize=1)
     def sf_objects(self):
         with open(self.filename) as fh:
             return [
@@ -74,7 +76,7 @@ class TestAssert(TestStepElement):
 
     def validate(self):
         logger.info(f"Asserting objects in {self.filename}")
-        for sf_object in  self.sf_objects:
+        for sf_object in self.sf_objects:
             sf_object.refresh_relations()
             current = copy(sf_object)
             if not current.load():
