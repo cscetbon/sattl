@@ -81,7 +81,8 @@ class TestAssert(TestStepElement):
             sf_object.refresh_relations()
             current = copy(sf_object)
             if not current.load():
-                raise Exception("Assert failed because the object can't be found in SF")
+                raise Exception(f"Assert failed because object {sf_object.type} "
+                                f"with externalID {sf_object.external_id.as_dict()} can't be found in SF")
             if diff := current.differences(sf_object):
                 raise Exception(f"Assert failed because there are differences:\n{diff}")
 

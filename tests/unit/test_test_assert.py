@@ -23,7 +23,8 @@ def test_assert_fails_because_cannot_load_it(yaml_with_five_sf_objects, sample_o
         TestAssert("00-assert.yaml", sf_connection=MagicMock()).validate()
 
     mock_so_differences.assert_called_once()
-    assert str(exc.value) == "Assert failed because the object can't be found in SF"
+    assert str(exc.value) == ("Assert failed because object Account with externalID {'Slug__c': 'aaa'} "
+                              "can't be found in SF")
 
 
 def test_assert_fails_because_it_is_different(yaml_with_five_sf_objects, sample_object_content):
