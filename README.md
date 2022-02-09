@@ -147,7 +147,7 @@ Sattl deletes the following objects sequentially:
 - Account object with Namespace_University_ID__c = 1800008:SC
 - PlatformAccount object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
 
-`externalID` is the concept of unique key used by SF to CRUD an object. However, SF doesn't enforce when creating objects using certain methods. Sattl won't create 2 different objects with the same external ID, and if more than one object is found Sattl will throw an error when trying to update the object with the specified externalID.
+`externalID` is the concept of unique key used by SF to CRUD objects. However, SF doesn't enforce this uniqueness when creating objects using certain methods like SOQL. Sattl won't create 2 different objects with the same external ID, but it can potentially find more than one if it's been created in SOQL for instance. In that case, finding more than one corresponding object, Sattl will throw an error when trying to upsert it using the specified externalID.
 
 ## Test Step 01
 
