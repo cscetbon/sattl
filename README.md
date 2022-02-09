@@ -168,11 +168,12 @@ relations:
 ```
 
 Sattl upserts Account object with UUID__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302 and all the specified fields.
+
 Objects can be interconnected through relations in SF. The field `relations` in a manifest contains a list of relations. Each relation name is the current's object field to set. A relation must contain 2 keys:
 - `type` for the type of the object where to lookup the external ID value
 - a pair of field name and field value to use as the external ID during the lookup
 
-For instance before upserting our current Account object, Sattl will search for a RecordType record with externalID `name` set to `SIS Student`, will grab its ID and assign that value to the field recordTypeID of the current upserted object. If no record can be found then Sattl will fail to upsert the Account object.
+For instance before upserting our current Account object, Sattl will search for a RecordType record with externalID `name` set to `SIS Student`, will grab its ID and assign that value to the field recordTypeID of the current upserted object. Relations are required field, so if no record can be found then Sattl will throw an error without even attempting to upsert the Account object.
 
 ##### **`01-course-and-section.yaml`**
 ```yaml
