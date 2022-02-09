@@ -147,6 +147,8 @@ Sattl deletes the following objects sequentially:
 - Account object with Namespace_University_ID__c = 1800008:SC
 - PlatformAccount object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
 
+`externalID` is the concept of unique key used by SF to CRUD an object. However, SF doesn't enforce when creating objects using certain methods. Sattl won't create 2 different objects with the same external ID, and if more than one object is found Sattl will throw an error when trying to update the object with the specified externalID.
+
 ## Test Step 01
 
 ### Manifests
@@ -165,7 +167,12 @@ relations:
     name: SIS Student
 ```
 
-Sattl creates Account object with UUID__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302 and all the specified fields.
+Sattl upserts Account object with UUID__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302 and all the specified fields.
+Objects can be interconnected through relations in SF. The field `relations` in a manifest contains a list of relations. Each relation name is the current's object field to set. A relation must contain 2 keys:
+- `type` for the type of the object where to lookup the external ID value
+- a pair of field name and field value to use as the external ID during the lookup
+
+For instance before upserting our current Account object, Sattl will search for a RecordType record with externalID `name` set to `SIS Student`, will grab its ID and assign that value to the field recordTypeID of the current upserted object. If no record can be found then Sattl will fail to upsert the Account object.
 
 ##### **`01-course-and-section.yaml`**
 ```yaml
@@ -192,7 +199,7 @@ relations:
     slug__c: MT-105A-03
 ```
 
-Sattl creates Course__c object with Slug__c = MT-105A-03 and all the specified fields, then the object Section__c
+Sattl upserts Course__c object with Slug__c = MT-105A-03 and all the specified fields, then the object Section__c
 with Slug__c = MT-105A-03:HOLDING:2020/1_05 with its fields as well.
 
 ##### **`01-enrollment.yaml`**
@@ -211,7 +218,7 @@ relations:
     Namespace_University_ID__c: 1800008:SC
 ```
 
-Sattl creates Enrollment__c object with Slug__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302:MT-105A-03:HOLDING:2020/1_05
+Sattl upserts Enrollment__c object with Slug__c = aaa52d9a-520c-4c7e-bbbb-3b6fde10b302:MT-105A-03:HOLDING:2020/1_05
 and all the specified fields.
 
 ### Assert
@@ -250,7 +257,7 @@ relations:
     Name: Port Authority Case
 ```
 
-Sattl creates Case object with Change_Active_ID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302 and all the specified
+Sattl upserts Case object with Change_Active_ID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302 and all the specified
 fields.
 
 ### Assert
@@ -277,9 +284,9 @@ relations:
   recordTypeID:
     type: RecordType
     name: SIS Student
-    Student__c:
-        type: Account
-        Namespace_University_ID__c: 1800008:SC
+  Student__c:
+      type: Account
+      Namespace_University_ID__c: 1800008:SC
 ```
 
 Sattl asserts Account object with UUID__c = fbd52d9a-520c-4c7e-b0ba-3b6fde10b302 exists and all its fields match
@@ -311,5 +318,7 @@ Assert failed because there are differences:
   type: Account
 ```
 
-If Sattl fails when trying to create objects found in Manifests or when deleting objects from Delete, it will stop there
+If Sattl fails when trying to upsert objects found in Manifests or when deleting objects from Delete, it will stop there
 without retrying.
+
+You can also use the flag `--debug` to ask Sattl to output debug logs which will show you the http requests it sends to Salesforce and a few other descriptive logs about what it's doing.
