@@ -236,7 +236,7 @@ None
 type: Case
 externalID:
   Change_Active_ID__c: fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
-change_id__c: new:account:fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
+change_key__c: new:account:fbd52d9a-520c-4c7e-b0ba-3b6fde10b302
 approval__c: Approved
 status: Closed-Approved
 reason: SIS
