@@ -14,6 +14,7 @@ def test_assert_succeeds(yaml_with_five_sf_objects, sample_object_content):
          patch('sattl.salesforce.object.SalesforceObject.differences', return_value=None) as mock_so_differences:
         test_assert = TestAssert("00-assert.yaml", sf_connection=mock_sf_connection)
         test_assert.validate()
+
     assert mock_so_differences.call_count == 5
     mock_so_differences.assert_called_with(SalesforceObject(mock_sf_connection, sample_object_content))
 
@@ -25,6 +26,7 @@ def test_assert_with_list_as_external_id_succeeds(yaml_with_sf_object_having_lis
          patch('sattl.salesforce.object.SalesforceObject.differences', return_value=None) as mock_so_differences:
         test_assert = TestAssert("00-assert.yaml", sf_connection=mock_sf_connection)
         test_assert.validate()
+
     assert mock_so_differences.call_count == 2
     data = dict(type="Account", name="bbb")
     mock_so_differences.assert_has_calls([
