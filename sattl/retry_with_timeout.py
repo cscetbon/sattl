@@ -16,7 +16,6 @@ class Timeout:
     def __init__(self, timeout=1):
         self.seconds = timeout
 
-
     def __enter__(self):
         signal.signal(signal.SIGALRM, _handle_timeout)
         signal.alarm(self.seconds)
