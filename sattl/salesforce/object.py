@@ -19,7 +19,7 @@ def get_salesforce_objects(salesforce_connection: SalesforceConnection, content:
         if not sf_content:
             continue
         case_insensitive_sf_content = CaseInsensitiveDict(sf_content)
-        if (external_id := case_insensitive_sf_content.get(EXTERNAL_ID, {})) and isinstance(external_id, list):
+        if (external_id := case_insensitive_sf_content.get(EXTERNAL_ID)) and isinstance(external_id, list):
             for _id in external_id:
                 sf_object = copy(case_insensitive_sf_content)
                 sf_object[EXTERNAL_ID] = _id
