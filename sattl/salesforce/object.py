@@ -1,3 +1,5 @@
+from copy import copy
+
 import yaml
 from requests.structures import CaseInsensitiveDict
 
@@ -9,6 +11,24 @@ from sattl.salesforce.constants import ID, EXTERNAL_ID, RELATIONS, TYPE
 from sattl.salesforce.connection import SalesforceConnection
 from sattl.salesforce.external_id import SalesforceExternalID
 from sattl.salesforce.relation import SalesforceRelation
+
+
+def get_salesforce_objects(salesforce_connection: SalesforceConnection, content: list):
+    sf_objects = []
+    for sf_content in content:
+        if not sf_content:
+            continue
+        case_insensitive_sf_content = CaseInsensitiveDict(sf_content)
+        if (external_id := case_insensitive_sf_content.get(EXTERNAL_ID)) and isinstance(external_id, list):
+            for _id in external_id:
+                sf_object = copy(case_insensitive_sf_content)
+                sf_object[EXTERNAL_ID] = _id
+                sf_objects.append(SalesforceObject(salesforce_connection, sf_object))
+            continue
+
+        sf_objects.append(SalesforceObject(salesforce_connection, sf_content))
+
+    return sf_objects
 
 
 class SalesforceObject:

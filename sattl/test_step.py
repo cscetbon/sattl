@@ -5,7 +5,7 @@ from functools import lru_cache
 from dataclasses import dataclass, field
 
 from sattl.logger import logger
-from sattl.salesforce import SalesforceConnection, SalesforceObject
+from sattl.salesforce import SalesforceConnection, get_salesforce_objects
 from sattl.retry_with_timeout import RetryWithTimeout
 
 
@@ -57,10 +57,7 @@ class TestStepElement:
     @lru_cache(maxsize=1)
     def sf_objects(self):
         with open(self.filename) as fh:
-            return [
-                SalesforceObject(self.sf_connection, content)
-                for content in yaml.load_all(fh, Loader=yaml.FullLoader) if content
-            ]
+            return get_salesforce_objects(self.sf_connection, yaml.load_all(fh, Loader=yaml.FullLoader))
 
 
 class TestManifest(TestStepElement):
