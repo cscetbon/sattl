@@ -4,9 +4,9 @@ setup(
     name="sattl",
     version="0.1.0",
     long_description_content_type="text/markdown",
-    url="https://github.com/2uinc/sattl",  # Optional
+    url="https://github.com/cscetbon/sattl",  # Optional
     author="2U, Inc.",
-    author_email="developers@2u.com",
+    author_email="@cscetbon",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
@@ -18,6 +18,6 @@ setup(
     },
     packages=find_packages(exclude=["doc", "tests"]),
     project_urls={
-        "Source": "https://github.com/2uinc/sattl",
+        "Source": "https://github.com/cscetbon/sattl",
     },
 )
