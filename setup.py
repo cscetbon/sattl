@@ -5,7 +5,7 @@ setup(
     version="0.1.0",
     long_description_content_type="text/markdown",
     url="https://github.com/cscetbon/sattl",  # Optional
-    author="2U, Inc.",
+    author="Cyril Scetbon",
     author_email="@cscetbon",
     classifiers=[
         "Programming Language :: Python :: 3",
