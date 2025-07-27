@@ -1,13 +1,10 @@
-version: "3.7"
-
 services:
-
   tests:
     build:
       context: .
     volumes:
-    - ./sattl:/app/sattl
-    - ./tests:/app/tests
+      - ./sattl:/app/sattl
+      - ./tests:/app/tests
 
   sattl:
     build:
