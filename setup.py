@@ -2,14 +2,15 @@ from setuptools import setup, find_packages
 
 setup(
     name="sattl",
-    version="0.1.0",
+    version="0.2.0",
     long_description_content_type="text/markdown",
-    url="https://github.com/cscetbon/sattl",  # Optional
+    url="https://github.com/cscetbon/sattl",
     author="Cyril Scetbon",
     author_email="@cscetbon",
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     entry_points={
         "console_scripts": [

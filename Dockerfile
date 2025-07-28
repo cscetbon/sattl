@@ -1,4 +1,4 @@
-FROM python:3.8-alpine AS base
+FROM python:3.12-alpine AS base
 
 RUN pip install pip --upgrade
 RUN apk add --no-cache --virtual .build-deps build-base libffi-dev
