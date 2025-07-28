@@ -38,4 +38,5 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           tags: ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}
+          target: base
           push: true
