@@ -21,6 +21,8 @@ jobs:
       always() &&
       !contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
